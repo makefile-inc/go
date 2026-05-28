@@ -1,0 +1,4 @@
+# excludes for go actions
+bin/
+tmp/
+*.json.test.result
