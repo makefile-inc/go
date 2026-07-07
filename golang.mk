@@ -273,9 +273,12 @@ _go/build/target:
 	if [[ -z "$$GO_BUILD_DYNAMIC" && -n "$$GO_ENABLE_CGO" ]]; then \
 		exit_with_err "Conflict! GO_BUILD_DYNAMIC not passed and GO_ENABLE_CGO passed"; \
 	fi; \
+	build_args=("build"); \
 	ld_flags=""; \
 	if [[ -z "$$GO_BUILD_DYNAMIC" ]]; then \
 		ld_flags="-s -w -extldflags '-static'"; \
+	else \
+		build_args+=("-linkshared"); \
 	fi; \
 	if [ -n "$$GO_BUILD_VARIABLES" ]; then \
 		if ! split_by "//||" split_vars "$$GO_BUILD_VARIABLES"; then \
@@ -292,7 +295,6 @@ _go/build/target:
 			ld_flags="$${ld_flags}-X '$$t_vr'"; \
 		done; \
 	fi; \
-	build_args=("build"); \
 	if [ -n "$$GO_BUILD_TAGS" ]; then \
 		split_by_comma go_tags_parsed "$$GO_BUILD_TAGS"; \
 		go_tags=""; \
