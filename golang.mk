@@ -322,7 +322,7 @@ _go/build/target:
 		cgo_en="1"; \
 	fi; \
 	build_str=""; \
-	for ba in "$${{build_args[@]}}"; do \
+	for ba in "$${build_args[@]}"; do \
 		ba_t="$$ba"; \
 		if [[ "$$ba" =~ [[:space:]] ]]; then \
     		ba_t="\"$$ba\""; \
