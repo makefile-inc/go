@@ -298,7 +298,7 @@ _go/build/target:
 		go_tags=""; \
 		for tg in "$${go_tags_parsed[@]}"; do \
 			t_tg="$$(trim_spaces "$$tg")"; \
-			if [ -z "$$t_vr" ]; then \
+			if [ -z "$$t_tg" ]; then \
 				continue; \
 			fi; \
 			if [ -n "$$go_tags" ]; then \
