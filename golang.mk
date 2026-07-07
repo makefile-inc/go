@@ -185,6 +185,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 			failed_files+=("$$out_file"); \
 			failed_tests_to_files["$$out_file"]="$$full_path"; \
 			failed_durations["$$out_file"]="$$cur_test_duration"; \
+			echo_err "$$full_path tests failed!"; \
 		else \
 			succeeded_durations["$$full_path"]="$$cur_test_duration"; \
 			rm -f "$$out_file"; \
