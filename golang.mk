@@ -200,7 +200,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 	fi; \
 	failed_tests=""; \
 	for fail_file in "$${failed_files[@]}"; do \
-		echo_err "In '$$failed_tests_to_files[$$fail_file]' tests unsuccessful in $$failed_durations[$$fail_file]"; \
+		echo_err "In \"$$failed_tests_to_files[$$fail_file]\" tests unsuccessful in $$failed_durations[$$fail_file]"; \
 		fail_for_file="$$("$$jq_bin" -r 'select(.Action == "fail" and has("Test")) | .Test' "$$fail_file")"; \
 		if [ -z "$$fail_for_file" ]; then \
 			continue; \
@@ -215,7 +215,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 		rm -f "$$fail_file"; \
 	done; \
 	echo_err "Tests FAILED in $$all_duration"; \
-	if [ -n "$$failed" ]; then \
+	if [ -n "$$failed_tests" ]; then \
 		echo "";\
 		echo_err "Unsuccessful tests:"; \
 		echo_err "$$("$$jq_bin" -rs "flatten | sort_by(. | split(\"/\") | length - 1) | join(\"\n\")"<<<"$$failed_tests")"; \
@@ -225,11 +225,12 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 
 go/test/race: export GO_TEST_RACE = true
 go/test/race: export GO_TEST_FORCE_RESTART = true
-go/test/race: go/test ## Run go test for all go modules with -force flag and force restart 
+go/test/race: ## Run go test for all go modules with -force flag and force restart 
+	$(MAKE) go/test
 
 go/test/force: export GO_TEST_FORCE_RESTART = true
-go/test/force: go/test ## Run go test for all go modules with force restart
-
+go/test/force: ## Run go test for all go modules with force restart
+	$(MAKE) go/test
 ##@ Go. Build
 
 export BUILD_TARGET = _go/build/target 
