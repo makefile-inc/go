@@ -332,7 +332,14 @@ _go/build/target:
 		fi; \
 		build_str="$${build_str}$${ba_t}"; \
 	done; \
-	echo_info "Build..."; \
+	build_msg=""; \
+	if [ -n "$$GO_TARGET_MODULE" ]; then \
+		build_msg=" in $$GO_TARGET_MODULE"; \
+		if ! cd "$$GO_TARGET_MODULE"; then \
+			exit_with_err "Cannot to cd GO_TARGET_MODULE $$GO_TARGET_MODULE"; \
+		fi; \
+	fi; \
+	echo_info "Build go app$${build_msg}"; \
 	echo_info "  GOOS=\"$$BUILD_OS\" GOARCH=\"$$BUILD_ARCH\" CGO_ENABLED=\"$$cgo_en\" go $$build_str"; \
 	GOOS="$$BUILD_OS" GOARCH="$$BUILD_ARCH" CGO_ENABLED="$$cgo_en" go "$${build_args[@]}"
 
