@@ -322,7 +322,7 @@ _go/build/target:
 		cgo_en="1"; \
 	fi; \
 	echo_info "Build..."; \
-	echo_info "  GOOS=\"$$BUILD_OS\" GOARCH=\"$$BUILD_ARCH\" CGO_ENABLED=\"$$cgo_en\" go $${build_args[@]}"; \
+	echo_info "  GOOS=\"$$BUILD_OS\" GOARCH=\"$$BUILD_ARCH\" CGO_ENABLED=\"$$cgo_en\" go $${build_args[*]}"; \
 	GOOS="$$BUILD_OS" GOARCH="$$BUILD_ARCH" CGO_ENABLED="$$cgo_en" go "$${build_args[@]}"
 
 go/build/current: build/current ## Build go app for current os and arch
