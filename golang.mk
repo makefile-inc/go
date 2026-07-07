@@ -35,7 +35,7 @@ check/installed/go: ## Check that go installed and check golang version (from GO
 	fi; \
 	exit 0
 
-_GO_ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+_GO_ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 go/check/gitignore/itself: export GITIGNORES_WITH_REQUIRED_RULES = $(_GO_ROOT_DIR)/makefile-common/.gitignore
 go/check/gitignore/itself: common/git/check/gitignore ## Check that .gitignore in makefile.inc/go up to date with makefile.inc/common 
