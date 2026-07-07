@@ -40,7 +40,7 @@ _GO_ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 go/check/gitignore/itself: export GITIGNORES_WITH_REQUIRED_RULES = $(_GO_ROOT_DIR)/makefile-common/.gitignore
 go/check/gitignore/itself: common/git/check/gitignore ## Check that .gitignore in makefile.inc/go up to date with makefile.inc/common 
 
-go/check/gitignore: common/git/check/gitignore ## Check that .gitignore up to date with makefile.inc/common and makefile.inc/go
+go/check/gitignore: ## Check that .gitignore up to date with makefile.inc/common and makefile.inc/go
 	@${INCLUDE_ECHO} \
 	to_check=( \
 		"$(_GO_ROOT_DIR)/makefile-common/.gitignore" \
@@ -385,4 +385,4 @@ clean/go: clean/build ## Remove gofumpt and olangci-lint binaries and tmp test d
 	@rm -fv "$(GOFUMPT_BIN_FULL)"
 	@rm -rfv "$(GO_TESTS_TMP_DIR)"
 
-.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target
+.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself
