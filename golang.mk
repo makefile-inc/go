@@ -147,6 +147,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 	@${INCLUDE_ECHO} \
 	race_arg=""; \
 	if [ -n "$$GO_TEST_RACE" ]; then \
+		echo_info "Run race tests..."; \
 		race_arg="-race"; \
 	fi; \
 	force_restart_arg=""; \
