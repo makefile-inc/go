@@ -275,9 +275,12 @@ _go/build/target:
 	fi; \
 	build_args=("build"); \
 	ld_flags=""; \
+	cgo_en="0"; \
 	if [[ -z "$$GO_BUILD_DYNAMIC" ]]; then \
+		cgo_en="0"; \
 		ld_flags="-s -w -extldflags '-static'"; \
 	else \
+		cgo_en="1"; \
 		build_args+=("-linkshared"); \
 	fi; \
 	if [ -n "$$GO_BUILD_VARIABLES" ]; then \
@@ -319,10 +322,6 @@ _go/build/target:
 	build_args+=("-o"); \
 	build_args+=("$$OUT_BIN"); \
 	build_args+=("$$GO_TARGET"); \
-	cgo_en="0"; \
-	if [ -n "$$GO_ENABLE_CGO" ]; then \
-		cgo_en="1"; \
-	fi; \
 	build_str=""; \
 	for ba in "$${build_args[@]}"; do \
 		ba_t="$$ba"; \
@@ -348,50 +347,50 @@ _go/build/target:
 go/build/current: build/current ## Build go app for current os and arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
+	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
 	@##~ GO_BUILD_TAGS=TAGS... - comma-separated build tags. Optional
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
-	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary without CGO
-	@##~ GO_ENABLE_CGO=true - if passed build binary with CGO
+	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
 go/build/linux: build/linux ## Build go app for linux os and current arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
+	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
 	@##~ GO_BUILD_TAGS=TAGS... - comma-separated build tags. Optional
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
-	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary without CGO
-	@##~ GO_ENABLE_CGO=true - if passed build binary with CGO
+	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
 go/build/linux/all: build/linux/all ## Build go app for linux for all arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
+	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
 	@##~ GO_BUILD_TAGS=TAGS... - comma-separated build tags. Optional
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
-	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary without CGO
-	@##~ GO_ENABLE_CGO=true - if passed build binary with CGO
+	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
 go/build/mac: build/mac ## Build go app for linux os and arm arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
+	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
 	@##~ GO_BUILD_TAGS=TAGS... - comma-separated build tags. Optional
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
-	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary without CGO
-	@##~ GO_ENABLE_CGO=true - if passed build binary with CGO
+	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
 go/build/mac/all: build/mac/all ## Build go app for all arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
+	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
 	@##~ GO_BUILD_TAGS=TAGS... - comma-separated build tags. Optional
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
-	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary without CGO
-	@##~ GO_ENABLE_CGO=true - if passed build binary with CGO
+	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
 go/build/all: build/all ## Build go app for mac and linux for all arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
+	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
 	@##~ GO_BUILD_TAGS=TAGS... - comma-separated build tags. Optional
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
-	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary without CGO
-	@##~ GO_ENABLE_CGO=true - if passed build binary with CGO
+	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
 
 ##@ Go. Cleanup
