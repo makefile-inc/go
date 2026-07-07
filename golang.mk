@@ -287,9 +287,9 @@ _go/build/target:
 				continue; \
 			fi; \
 			if [ -n "$$ld_flags" ]; then \
-				ld_flags="$${ld_flags} "
+				ld_flags="$${ld_flags} "; \
 			fi; \
-			ld_flags="$${ld_flags}-X $$t_vr"
+			ld_flags="$${ld_flags}-X $$t_vr"; \
 		done; \
 	fi; \
 	build_args=("build"); \
@@ -302,9 +302,9 @@ _go/build/target:
 				continue; \
 			fi; \
 			if [ -n "$$go_tags" ]; then \
-				go_tags="$${go_tags},"
+				go_tags="$${go_tags},"; \
 			fi; \
-			go_tags="$${go_tags}$${t_tg}"
+			go_tags="$${go_tags}$${t_tg}"; \
 		done; \
 		if [ -n "$$go_tags" ]; then \
 			build_args+=("-tags=$$go_tags"); \
