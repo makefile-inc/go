@@ -37,8 +37,30 @@ check/installed/go: ## Check that go installed and check golang version (from GO
 
 _GO_ROOT_DIR:=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
 
-go/check/gitignore: export GITIGNORES_WITH_REQUIRED_RULES = $(_GO_ROOT_DIR)/makefile-common/.gitignore
-go/check/gitignore: common/git/check/gitignore ## Check that .gitignore up to date with makefile-inc/common
+go/check/gitignore/itself: export GITIGNORES_WITH_REQUIRED_RULES = $(_GO_ROOT_DIR)/makefile-common/.gitignore
+go/check/gitignore/itself: common/git/check/gitignore ## Check that .gitignore in makefile.inc/go up to date with makefile.inc/common 
+
+go/check/gitignore: common/git/check/gitignore ## Check that .gitignore up to date with makefile.inc/common and makefile.inc/go
+	@${INCLUDE_ECHO} \
+	to_check=( \
+		"$(_GO_ROOT_DIR)/makefile-common/.gitignore" \
+		"$(_GO_ROOT_DIR)/.gitignore" \
+	); \
+	failed=(); \
+	for ck in "$${to_check[@]}"; do \
+		echo_info "Check gitignore for $$ck"; \
+		if ! $(MAKE) common/git/check/gitignore GITIGNORES_WITH_REQUIRED_RULES="$$ck"; then \
+			failed+=("$$ck"); \
+		fi; \
+	done; \
+	if [ "$${#failed[@]}" -eq "0" ]; then \
+		exit 0; \
+	fi; \
+	echo_err "Gitignore not contains items from:"; \
+	for fl in "$${failed[@]}"; do \
+		echo_err "  $$fl"; \
+	done; \
+	exit 1
 
 install/go/gofumpt: export INSTALL_BIN_NAME = $(GOFUMPT_BIN)
 install/go/gofumpt: export INSTALL_BIN_VERSION = $(GOFUMPT_VERSION)
@@ -112,6 +134,9 @@ go/tidy: check/installed/go ## Find all go modules and run go mod tidy
 	for ii in $$(${FIND_GO_MODULES_CMD}); do \
 		pushd . > /dev/null; \
 		full_path="$$(realpath "$$ii")"; \
+		if ! cd "$$full_path"; then \
+			exit_with_err "Cannot cd to $$full_path"; \
+		fi; \
 		echo_info "Run go mod tidy in $$full_path"; \
 		if ! go mod tidy; then \
 			echo_err "go mod tidy in $$full_path failed!"; \
@@ -229,11 +254,12 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 go/test/race: export GO_TEST_RACE = true
 go/test/race: export GO_TEST_FORCE_RESTART = true
 go/test/race: ## Run go test for all go modules with -force flag and force restart 
-	$(MAKE) go/test
+	@$(MAKE) go/test
 
 go/test/force: export GO_TEST_FORCE_RESTART = true
 go/test/force: ## Run go test for all go modules with force restart
-	$(MAKE) go/test
+	@$(MAKE) go/test
+
 ##@ Go. Build
 
 export BUILD_TARGET = _go/build/target 
