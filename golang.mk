@@ -319,7 +319,7 @@ _go/build/target:
 	build_args+=("$$GO_TARGET"); \
 	cgo_en="0"; \
 	if [ -n "$$GO_ENABLE_CGO" ]; then \
-		cgo_en="1"; \ 
+		cgo_en="1"; \
 	fi; \
 	echo_info "Build..."; \
 	echo_info "  GOOS=\"$$BUILD_OS\" GOARCH=\"$$BUILD_ARCH\" CGO_ENABLED=\"$$cgo_en\" go $${build_args[@]}"; \
