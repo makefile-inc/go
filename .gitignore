@@ -1,4 +1,4 @@
 bin/
 build/
 tmp-go-tests/
-*.json.test.result
+*.tst.res

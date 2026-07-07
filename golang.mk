@@ -165,7 +165,8 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 	declare -A failed_durations; \
 	start_all_micro="$$(${NOW_MICROSECONDS})"; \
 	for ii in $$(${FIND_GO_MODULES_CMD}); do \
-		out_file="$(GO_TESTS_TMP_DIR)/$$(date +%F_%H-%M-%S).json.test.result"; \
+		file_nano="$$(date +"%s-%N")"; \
+		out_file="$(GO_TESTS_TMP_DIR)/$${file_nano}-$${RANDOM}.tst.res"; \
 		pushd . > /dev/null; \
 		full_path="$$(realpath "$$ii")"; \
 		echo_info "--- Run tests in $$full_path ---"; \
