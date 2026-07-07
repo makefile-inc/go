@@ -191,7 +191,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 	done; \
 	end_all_micro="$$(${NOW_MICROSECONDS})"; \
 	all_duration="$$(${HUMAN_DURATION_MICROSECONDS} "$$start_all_micro" "$$end_all_micro")"; \
-	for st in "${!succeeded_durations[@]}"; do \
+	for st in "$${!succeeded_durations[@]}"; do \
     	echo_info "Tests in '$$st' passed in $${succeeded_durations[$$st]}"; \
 	done; \
 	if [ "$${#failed_files[@]}" -eq 0 ]; then \
