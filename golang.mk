@@ -282,7 +282,7 @@ _go/build/target:
 			exit_with_err "Cannot split GO_BUILD_VARIABLES='$$GO_BUILD_VARIABLES'"; \
 		fi; \
 		for vr in "$${split_vars[@]}"; do \
-			t_vr="$$(trim_spaces "$$vr")"; \
+			t_vr="$$(trim_spaces_left "$$vr")"; \
 			if [ -z "$$t_vr" ]; then \
 				continue; \
 			fi; \
