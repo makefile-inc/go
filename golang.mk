@@ -289,7 +289,7 @@ _go/build/target:
 			if [ -n "$$ld_flags" ]; then \
 				ld_flags="$${ld_flags} "; \
 			fi; \
-			ld_flags="$${ld_flags}-X $$t_vr"; \
+			ld_flags="$${ld_flags}-X '$$t_vr'"; \
 		done; \
 	fi; \
 	build_args=("build"); \
