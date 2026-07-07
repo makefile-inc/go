@@ -262,7 +262,7 @@ go/test/force: ## Run go test for all go modules with force restart
 
 ##@ Go. Build
 
-export BUILD_TARGET = _go/build/target 
+export BUILD_TARGET = _go/build/target
 
 _go/build/target:
 	@${INCLUDE_ECHO} \
