@@ -281,7 +281,7 @@ _go/build/target:
 		if ! split_by "//||" split_vars "$$GO_BUILD_VARIABLES"; then \
 			exit_with_err "Cannot split GO_BUILD_VARIABLES='$$GO_BUILD_VARIABLES'"; \
 		fi; \
-		for vr in "$${{split_vars[@]}}"; do \
+		for vr in "$${split_vars[@]}"; do \
 			t_vr="$$(trim_spaces "$$vr")"; \
 			if [ -z "$$t_vr" ]; then \
 				continue; \
@@ -296,7 +296,7 @@ _go/build/target:
 	if [ -n "$$GO_BUILD_TAGS" ]; then \
 		split_by_comma go_tags_parsed "$$GO_BUILD_TAGS"; \
 		go_tags=""; \
-		for tg in "$${{go_tags_parsed[@]}}"; do \
+		for tg in "$${go_tags_parsed[@]}"; do \
 			t_tg="$$(trim_spaces "$$tg")"; \
 			if [ -z "$$t_vr" ]; then \
 				continue; \
