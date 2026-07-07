@@ -200,7 +200,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 	fi; \
 	failed_tests=""; \
 	for fail_file in "$${failed_files[@]}"; do \
-		echo_err "In \"$$failed_tests_to_files[$$fail_file]\" tests unsuccessful in $$failed_durations[$$fail_file]"; \
+		echo_err "In \"$${failed_tests_to_files[$$fail_file]}\" tests unsuccessful in $${failed_durations[$$fail_file]}"; \
 		fail_for_file="$$("$$jq_bin" -r 'select(.Action == "fail" and has("Test")) | .Test' "$$fail_file")"; \
 		if [ -z "$$fail_for_file" ]; then \
 			continue; \
