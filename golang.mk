@@ -138,7 +138,7 @@ go/check/no-tidy: common/git/check/has-diff ## Run go mod tidy for all go module
 tmp-go-tests: ## Create tmp dir ($(CURDIR)/tmp/go-tests) for output tests results. Needs for pretty print tests results
 	@mkdir -p "$(GO_TESTS_TMP_DIR)"
 
-go/test: check/installed/go install/jq tmp/go-tests ## Run go test for all go modules and pretty print tests results.
+go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go modules and pretty print tests results.
 	@##~ GO_TEST_RACE=true - run tests with -race flag. By default: run without race
 	@##~ GO_TEST_FORCE_RESTART=true - force rerun tests without using cache. By default: run with cache
 	@##~ GO_TEST_PARALLEL=NUMBER - if passed run parallel tests packages. 
