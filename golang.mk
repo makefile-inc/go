@@ -321,8 +321,19 @@ _go/build/target:
 	if [ -n "$$GO_ENABLE_CGO" ]; then \
 		cgo_en="1"; \
 	fi; \
+	build_str=""; \
+	for ba in "$${{build_args[@]}}"; do \
+		ba_t="$$ba"; \
+		if [[ "$$ba" =~ [[:space:]] ]]; then \
+    		ba_t="\"$$ba\""; \
+		fi; \
+		if [ -n "$$build_str" ]; then \
+			build_str="$${build_str} "; \
+		fi; \
+		build_str="$${build_str}$${ba_t}"; \
+	done; \
 	echo_info "Build..."; \
-	echo_info "  GOOS=\"$$BUILD_OS\" GOARCH=\"$$BUILD_ARCH\" CGO_ENABLED=\"$$cgo_en\" go $${build_args[*]}"; \
+	echo_info "  GOOS=\"$$BUILD_OS\" GOARCH=\"$$BUILD_ARCH\" CGO_ENABLED=\"$$cgo_en\" go $$build_str"; \
 	GOOS="$$BUILD_OS" GOARCH="$$BUILD_ARCH" CGO_ENABLED="$$cgo_en" go "$${build_args[@]}"
 
 go/build/current: build/current ## Build go app for current os and arch
