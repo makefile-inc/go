@@ -67,7 +67,7 @@ install/go/golangci-lint: check/installed/curl ## golangci-lint https://github.c
 
 go/lint: check/installed/go install/go/golangci-lint ## Lint code with golangci-lint. Use $(CURDIR)/.golangci.yaml config. Find all do modules and lint for each
 	@##~ RUN_FIX=true - run lint with fix problems. By default: no fix
-	@{INCLUDE_ECHO} \
+	@${INCLUDE_ECHO} \
 	full_cfg="$(CURDIR)/.golangci.yaml"; \
 	if [ ! -f "$$full_cfg" ]; then \
 		exit_with_err "config '$$full_cfg' is not present!"; \
@@ -107,7 +107,7 @@ go/lint/fix: go/lint ## Run go/lint with fix
 ##@ Go. Tidy
 
 go/tidy: check/installed/go ## Find all go modules and run go mod tidy
-	@{INCLUDE_ECHO} \
+	@${INCLUDE_ECHO} \
 	failed=(); \
 	for ii in $$(${FIND_GO_MODULES_CMD}); do \
 		pushd . > /dev/null; \
@@ -144,7 +144,7 @@ go/test: check/installed/go install/jq tmp/go-tests ## Run go test for all go mo
 	@##~ GO_TEST_PARALLEL=NUMBER - if passed run parallel tests packages. 
 	@##~   For disable parallelism pass GO_TEST_PARALLEL=1
 	@##~   By default: use default parallelism mechanics
-	@{INCLUDE_ECHO} \
+	@${INCLUDE_ECHO} \
 	race_arg=""; \
 	if [ -n "$$GO_TEST_RACE" ]; then \
 		race_arg="-race"; \
