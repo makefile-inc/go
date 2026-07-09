@@ -1,4 +1,4 @@
-# excludes for go actions
 bin/
-tmp/
-*.json.test.result
+build/
+tmp-go-tests/
+*.tst.res
