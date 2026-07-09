@@ -11,9 +11,9 @@ GO_TESTS_TMP_DIR      = $(abspath $(CURDIR)/tmp-go-tests)
 # Example:
 #   include *.mk
 #   go-mods/print:
-#	      @for ii in $$(${FIND_GO_MODULES_CMD}); do \
-#	          echo "Find go module in $$ii"; \
-#         done
+#		@for ii in $$(${FIND_GO_MODULES_CMD}); do \
+#			echo "Find go module in $$ii"; \
+#   	done
 define FIND_GO_MODULES_CMD
 find $(CURDIR) -type f -name "go.mod" -printf "%h\n" | sort -u
 endef
@@ -88,7 +88,7 @@ install/go/golangci-lint: check/installed/curl ## golangci-lint https://github.c
 ##@ Go. Linting
 
 go/lint: check/installed/go install/go/golangci-lint ## Lint code with golangci-lint. Use $(CURDIR)/.golangci.yaml config. Find all do modules and lint for each
-	@##~ RUN_FIX=true - run lint with fix problems. By default: no fix
+	@##~ RUN_FIX=true - if passed run lint with fix problems. By default: no fix
 	@${INCLUDE_ECHO} \
 	full_cfg="$(CURDIR)/.golangci.yaml"; \
 	if [ ! -f "$$full_cfg" ]; then \
@@ -160,7 +160,7 @@ go/check/no-tidy: common/git/check/has-diff ## Run go mod tidy for all go module
 
 ##@ Go. Tests
 
-tmp-go-tests: ## Create tmp dir ($(CURDIR)/tmp/go-tests) for output tests results. Needs for pretty print tests results
+tmp-go-tests: ## Create tmp dir $(CURDIR)/tmp-go-tests for output tests results. Needs for pretty print tests results
 	@mkdir -p "$(GO_TESTS_TMP_DIR)"
 
 go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go modules and pretty print tests results.
@@ -168,7 +168,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 	@##~ GO_TEST_FORCE_RESTART=true - force rerun tests without using cache. By default: run with cache
 	@##~ GO_TEST_PARALLEL=NUMBER - if passed run parallel tests packages. 
 	@##~   For disable parallelism pass GO_TEST_PARALLEL=1
-	@##~   By default: use default parallelism mechanics
+	@##~   By default: use default go test parallelism mechanics
 	@${INCLUDE_ECHO} \
 	race_arg=""; \
 	if [ -n "$$GO_TEST_RACE" ]; then \
@@ -395,7 +395,7 @@ go/build/all: build/all ## Build go app for mac and linux for all arch
 
 ##@ Go. Cleanup
 
-clean/go: clean/build ## Remove gofumpt and olangci-lint binaries and tmp test dir and binaries produced by build
+clean/go: clean/build ## Remove gofumpt and golangci-lint binaries and tmp test dir and binaries produced by build
 	@##~ REMOVE_COMMON=true - remove binaries for https://github.com/makefile-inc/common.git
 	@##~   uses jq from https://github.com/makefile-inc/common.git
 	@##~   By default: no remove
