@@ -66,7 +66,7 @@ include $(CURDIR)/makefile-go/include.mk.inc
 ```bash
 cd makefile-go
 git fetch -a && git checkout NEW_TAG && git pull
-git submodule update --recursive --init
+git submodule update --recursive
 popd
 ```
 
