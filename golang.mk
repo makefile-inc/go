@@ -344,7 +344,7 @@ _go/build/target:
 	echo_info "  GOOS=\"$$BUILD_OS\" GOARCH=\"$$BUILD_ARCH\" CGO_ENABLED=\"$$cgo_en\" go $$build_str"; \
 	GOOS="$$BUILD_OS" GOARCH="$$BUILD_ARCH" CGO_ENABLED="$$cgo_en" go "$${build_args[@]}"
 
-go/build/current: build/current ## Build go app for current os and arch
+go/build/current: common/build/current ## Build go app for current os and arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
 	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
@@ -352,7 +352,7 @@ go/build/current: build/current ## Build go app for current os and arch
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
 	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
-go/build/linux: build/linux ## Build go app for linux os and current arch
+go/build/linux: common/build/linux ## Build go app for linux os and current arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
 	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
@@ -360,7 +360,7 @@ go/build/linux: build/linux ## Build go app for linux os and current arch
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
 	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
-go/build/linux/all: build/linux/all ## Build go app for linux for all arch
+go/build/linux/all: common/build/linux/all ## Build go app for linux for all arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
 	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
@@ -368,7 +368,7 @@ go/build/linux/all: build/linux/all ## Build go app for linux for all arch
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
 	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
-go/build/mac: build/mac ## Build go app for linux os and arm arch
+go/build/mac: common/build/mac ## Build go app for linux os and arm arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
 	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
@@ -376,7 +376,7 @@ go/build/mac: build/mac ## Build go app for linux os and arm arch
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
 	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
-go/build/mac/all: build/mac/all ## Build go app for all arch
+go/build/mac/all: common/build/mac/all ## Build go app for all arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
 	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
@@ -384,7 +384,7 @@ go/build/mac/all: build/mac/all ## Build go app for all arch
 	@##~ GO_BUILD_VARIABLES=VARIABLES... - //||-separated variables to add to binary. Optional
 	@##~ GO_BUILD_DYNAMIC=true - if passed build dynamic binary with CGO
 
-go/build/all: build/all ## Build go app for mac and linux for all arch
+go/build/all: common/build/all ## Build go app for mac and linux for all arch
 	@##~ PROJECT_NAME=NAME - name of project. Required
 	@##~ GO_TARGET=PKG_OR_FILE - path to package or go file to build. Required
 	@##~ GO_TARGET_MODULE=DIR - if passed will cd to directory for build. Optional
