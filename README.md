@@ -32,7 +32,7 @@ Checkout to target version:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.1.0 && git pull
+git fetch -a && git checkout v0.2.0 && git pull
 git submodule update --recursive --init 
 popd
 ```
