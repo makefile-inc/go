@@ -80,6 +80,7 @@ runs:
           ref_to_output="$ref_from_pull"
         fi
       fi
+      echo "Checkout ref is '$ref_to_output'"
       echo "ref=$ref_to_output" >> "$GITHUB_OUTPUT"
    - name: Checkout
      if: ${{ steps.checkout_resolve.outputs.ref != '' }}
