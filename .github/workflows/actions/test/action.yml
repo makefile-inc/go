@@ -1,0 +1,97 @@
+name: 'Test go code'
+description: | 
+  Test go code with https://github.com/makefile-inc/go
+  By default, action will checkout repo on github.event.pull_request.head.sha
+  if handle `PullRequestEvent` with `submodules: "recursive"` option.
+inputs:
+  checkout:
+    description: |
+      Checkout repo on github.event.pull_request.head.sha if handle `PullRequestEvent`
+      with `submodules: "recursive"` option.
+      For disable, pass 'false', for example run tests on tags.
+      In this case you need checkout manually before run action
+      with `submodules: "recursive"` option!
+    required: false
+    default: 'true'
+  check_gitignore:
+    description: |
+      Check .gitignore for repo for in sync with makefile include repo.
+      Pass 'false' to disable.
+    required: false
+    default: 'true'
+  run_race_tests:
+    description: |
+      Run tests with `-race` flag
+      Values:
+      - no - no run race tests (default)
+      - with_tests - run race tests after run tests without `-race`
+      - without_tests - run race tests without  no race tests
+    required: false
+    default: 'no'
+  parallel_tests:
+    description: |
+      Run tests in parallel (by default).
+      Pass 'false' to run tests with flag `-p 1`
+    required: false
+    default: 'true'
+  envs:
+    description: |
+      Add envs to run tests.
+      Should be in `.env` format like: 
+        # disable e2e
+        ENABLE_E2E=false
+        # enable integration 
+        ENABLE_INTEGRATION=true
+    required: false
+    default: ''
+  test_tags:
+    description: |
+      Comma-separated tags for run tests.
+    required: false
+    default: ''
+runs:
+  using: 'composite'
+  steps:
+   - name: Checkout
+     if: ${{ inputs.checkout == 'true' && github.event.type == 'PullRequestEvent' }}
+     uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+     with:
+      fetch-depth: 0
+      submodules: "recursive"
+      ref: ${{ github.event.pull_request && github.event.pull_request.head.sha || '_INVALID_' }}
+    - name: Check .gitignore
+      if: ${{ inputs.check_gitignore == 'true' }}
+      shell: bash
+      run: make go/check/gitignore
+    - name: Check go mod tidy not produce diff
+      shell: bash
+      run: make go/check/no-tidy
+    - name: Write envs file
+      if: ${{ inputs.envs != '' }}
+      run: |
+        echo '${{ inputs.envs }}' > .tests_dot_env
+    - name: Run tests without race
+      if: ${{ inputs.run_race_tests != 'without_tests' }}
+      shell: bash
+      env: &TEST_ENVS
+        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '1' || '' }}
+        GO_TEST_TAGS: ${{ inputs.tags != '' && inputs.tags || '' }}
+      run: |
+        if [ -f ".tests_dot_env" ]; then
+          set -a && source .tests_dot_env && set +a
+        fi
+        make go/test
+    - name: Run tests with race
+      if: ${{ inputs.run_race_tests != 'no' }}
+      shell: bash
+      env: *TEST_ENVS
+      run: |
+        if [ -f ".tests_dot_env" ]; then
+          set -a && source .tests_dot_env && set +a
+        fi
+        make go/test/race
+    - name: Cleanup
+      if: always()
+      shell: bash
+      run: |
+        rm -f ".tests_dot_env"
