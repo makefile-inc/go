@@ -4,15 +4,26 @@ description: |
   By default, action will checkout repo on github.event.pull_request.head.sha
   if handle `PullRequestEvent` with `submodules: "recursive"` option.
 inputs:
+  go_version:
+    description: |
+      Go version for actions/setup-go like `1.26.x`.
+      If do not need to setup go pass empty string.
+    required: false
+    default: '1.26.x'
   checkout:
     description: |
-      Checkout repo on github.event.pull_request.head.sha if handle `PullRequestEvent`
-      with `submodules: "recursive"` option.
-      For disable, pass 'false', for example run tests on tags.
-      In this case you need checkout manually before run action
-      with `submodules: "recursive"` option!
+      Checkout repo. 
+      You can pass next values:
+      - '_pull_request_ref_' - will checkout on github.event.pull_request.head.sha if handle `PullRequestEvent` 
+        with `submodules: "recursive"` option.
+        It is default.
+      - '' - empty string disable, pass for example run tests on tags.
+        In this case you need checkout manually before run action
+        with `submodules: "recursive"` option!
+      - 'ref' - non-empty string represents as ref in github repo.
+        Will checkout with `submodules: "recursive"` option.
     required: false
-    default: 'true'
+    default: '_pull_request_ref_'
   check_gitignore:
     description: |
       Check .gitignore for repo for in sync with makefile include repo.
@@ -52,13 +63,36 @@ inputs:
 runs:
   using: 'composite'
   steps:
+   - name: Checkout ref resolve
+     id: "checkout_resolve"
+     env:
+      ref_from_user: ${{ inputs.checkout }}
+      ref_from_pull: ${{ (github.event.type == 'PullRequestEvent' && github.event.pull_request) && github.event.pull_request.head.sha || '' }}
+     shell: bash
+     run: |
+      ref_to_output="$ref_from_user"
+      if [ -n "$ref_to_output" ]; then
+        if [[ "$ref_to_output" == "_pull_request_ref_" ]]; then
+          if [ -z "$ref_from_pull" ]; then
+            echo -e "\033[0;31mPassed use ref from pull request but pull request ref is empty\033[0m"
+            exit 1
+          fi
+          ref_to_output="$ref_from_pull"
+        fi
+      fi
+      echo "ref=$ref_to_output" >> "$GITHUB_OUTPUT"
    - name: Checkout
-     if: ${{ inputs.checkout == 'true' && github.event.type == 'PullRequestEvent' }}
+     if: ${{ steps.checkout_resolve.outputs.ref != '' }}
      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
      with:
       fetch-depth: 0
       submodules: "recursive"
-      ref: ${{ github.event.pull_request && github.event.pull_request.head.sha || '_INVALID_' }}
+      ref: ${{ steps.checkout_resolve.outputs.ref }}
+    - name: Setup Go
+      if: ${{ inputs.go_version != '' }}
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+      with:
+        go-version: ${{ inputs.go_version }}
     - name: Check .gitignore
       if: ${{ inputs.check_gitignore == 'true' }}
       shell: bash
