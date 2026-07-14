@@ -64,7 +64,7 @@ runs:
   using: 'composite'
   steps:
     - name: Setup
-      uses: name212/action-dynamic-uses@v1
+      uses: name212/action-dynamic-uses@v2
       with:
         uses: '${{ github.action_path }}/../setup'
         with: |
