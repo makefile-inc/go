@@ -27,13 +27,13 @@ inputs:
 runs:
   using: 'composite'
   steps:
-   - name: Checkout ref resolve
-     id: "checkout_resolve"
-     env:
+  - name: Checkout ref resolve
+    id: "checkout_resolve"
+    env:
       ref_from_user: ${{ inputs.checkout }}
       ref_from_pull: ${{ (github.event.type == 'PullRequestEvent' && github.event.pull_request) && github.event.pull_request.head.sha || '' }}
-     shell: bash
-     run: |
+    shell: bash
+    run: |
       ref_to_output="$ref_from_user"
       if [ -n "$ref_to_output" ]; then
         if [[ "$ref_to_output" == "_pull_request_ref_" ]]; then
@@ -46,15 +46,15 @@ runs:
       fi
       echo "Checkout ref is '$ref_to_output'"
       echo "ref=$ref_to_output" >> "$GITHUB_OUTPUT"
-   - name: Checkout
-     if: ${{ steps.checkout_resolve.outputs.ref != '' }}
-     uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-     with:
+  - name: Checkout
+    if: ${{ steps.checkout_resolve.outputs.ref != '' }}
+    uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    with:
       fetch-depth: 0
       submodules: "recursive"
       ref: ${{ steps.checkout_resolve.outputs.ref }}
-    - name: Setup Go
-      if: ${{ inputs.go_version != '' }}
-      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
-      with:
-        go-version: ${{ inputs.go_version }}
+  - name: Setup Go
+    if: ${{ inputs.go_version != '' }}
+    uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+    with:
+      go-version: ${{ inputs.go_version }}
