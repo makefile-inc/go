@@ -79,6 +79,7 @@ runs:
       run: make go/check/no-tidy
     - name: Write envs file
       if: ${{ inputs.envs != '' }}
+      shell: bash
       run: |
         echo '${{ inputs.envs }}' > .tests_dot_env
     - name: Run tests without race
