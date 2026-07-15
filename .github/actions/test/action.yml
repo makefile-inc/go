@@ -64,9 +64,9 @@ runs:
   using: 'composite'
   steps:
     - name: Setup
-      uses: name212/action-dynamic-uses@ace21bf1a070364025e5a881ffd571018e1d2b53
+      uses: name212/action-dynamic-uses@c8f59ad31def32bec93686e7440b6fdd33d5220f
       with:
-        uses: '${{ github.action_path }}/../setup'
+        uses: 'dir:${{ github.action_path }}/../setup'
         with: |
           go_version: "${{ inputs.go_version }}"
           checkout: "${{ inputs.checkout }}"
