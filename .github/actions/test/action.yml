@@ -84,7 +84,7 @@ runs:
     - name: Run tests without race
       if: ${{ inputs.run_race_tests != 'without_tests' }}
       shell: bash
-      env: &TEST_ENVS
+      env:
         GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '1' || '' }}
         GO_TEST_TAGS: ${{ inputs.tags != '' && inputs.tags || '' }}
       run: |
@@ -95,7 +95,9 @@ runs:
     - name: Run tests with race
       if: ${{ inputs.run_race_tests != 'no' }}
       shell: bash
-      env: *TEST_ENVS
+      env:
+        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '1' || '' }}
+        GO_TEST_TAGS: ${{ inputs.tags != '' && inputs.tags || '' }}
       run: |
         if [ -f ".tests_dot_env" ]; then
           set -a && source .tests_dot_env && set +a
