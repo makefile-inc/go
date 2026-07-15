@@ -64,7 +64,7 @@ runs:
   using: 'composite'
   steps:
     - name: Setup
-      uses: name212/action-dynamic-uses@f04c0fcc9dd6a60a7afc876e6c360b1ac9b5003c
+      uses: name212/action-dynamic-uses@dc77a3349fecbd50c85ee651868ac03444af877a # v3
       with:
         uses: 'dir:${{ github.action_path }}/../setup'
         with: |
