@@ -184,9 +184,13 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 	parallel_arg=""; \
 	if [ -n "$$GO_TEST_PARALLEL" ]; then \
 		parallel_arg="-p $$GO_TEST_PARALLEL"; \
+		parallel_msg="With parallelism '$$GO_TEST_PARALLEL'"; \
+		if [ "$$GO_TEST_PARALLEL" = "1" ]; then \
+			parallel_msg="Parallelism disabled"; \
+		fi; \
+		echo_info "$$parallel_msg"; \
 	fi; \
 	tags_arg=""; \
-	tags_msg=""; \
 	if [ -n "$$GO_TEST_TAGS" ]; then \
 		split_by_comma go_tags_parsed "$$GO_TEST_TAGS"; \
 		go_tags=""; \
@@ -202,7 +206,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 		done; \
 		if [ -n "$$go_tags" ]; then \
 			tags_arg="-tags=$$go_tags"; \
-			tags_msg=" (with tags: $$go_tags)"; \
+			echo_info "With tags: $$go_tags"; \
 		fi; \
 	fi; \
 	jq_bin="$(JQ_BIN_FULL)"; \
@@ -216,7 +220,7 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 		out_file="$(GO_TESTS_TMP_DIR)/$${file_nano}-$${RANDOM}.tst.res"; \
 		pushd . > /dev/null; \
 		full_path="$$(realpath "$$ii")"; \
-		echo_info "--- Run tests in $${full_path}$${tags_msg} ---"; \
+		echo_info "--- Run tests in $${full_path} ---"; \
 		if ! cd "$$full_path"; then \
 			exit_with_err "Cannot cd to $$full_path"; \
 		fi; \

@@ -36,7 +36,7 @@ inputs:
       Values:
       - no - no run race tests (default)
       - with_tests - run race tests after run tests without `-race`
-      - without_tests - run race tests without  no race tests
+      - without_tests - run race tests without no race tests
     required: false
     default: 'no'
   parallel_tests:
@@ -87,7 +87,7 @@ runs:
       shell: bash
       env:
         GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
-        GO_TEST_TAGS: ${{ inputs.tests_tags != '' && inputs.tests_tags || '' }}
+        GO_TEST_TAGS: ${{ inputs.tests_tags }}
       run: |
         if [ -f ".tests_dot_env" ]; then
           set -a && source .tests_dot_env && set +a
@@ -98,7 +98,7 @@ runs:
       shell: bash
       env:
         GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
-        GO_TEST_TAGS: ${{ inputs.tests_tags != '' && inputs.tests_tags || '' }}
+        GO_TEST_TAGS: ${{ inputs.tests_tags }}
       run: |
         if [ -f ".tests_dot_env" ]; then
           set -a && source .tests_dot_env && set +a
