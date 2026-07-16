@@ -45,7 +45,7 @@ inputs:
       Pass 'false' to run tests with flag `-p 1`
     required: false
     default: 'true'
-  envs:
+  tests_envs:
     description: |
       Add envs to run tests.
       Should be in `.env` format like: 
@@ -55,7 +55,7 @@ inputs:
         ENABLE_INTEGRATION=true
     required: false
     default: ''
-  test_tags:
+  tests_tags:
     description: |
       Comma-separated tags for run tests.
     required: false
@@ -78,16 +78,16 @@ runs:
       shell: bash
       run: make go/check/no-tidy
     - name: Write envs file
-      if: ${{ inputs.envs != '' }}
+      if: ${{ inputs.tests_envs != '' }}
       shell: bash
       run: |
-        echo '${{ inputs.envs }}' > .tests_dot_env
+        echo '${{ inputs.tests_envs }}' > .tests_dot_env
     - name: Run tests without race
       if: ${{ inputs.run_race_tests != 'without_tests' }}
       shell: bash
       env:
-        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '1' || '' }}
-        GO_TEST_TAGS: ${{ inputs.tags != '' && inputs.tags || '' }}
+        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
+        GO_TEST_TAGS: ${{ inputs.tests_tags != '' && inputs.tests_tags || '' }}
       run: |
         if [ -f ".tests_dot_env" ]; then
           set -a && source .tests_dot_env && set +a
@@ -97,8 +97,8 @@ runs:
       if: ${{ inputs.run_race_tests != 'no' }}
       shell: bash
       env:
-        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '1' || '' }}
-        GO_TEST_TAGS: ${{ inputs.tags != '' && inputs.tags || '' }}
+        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
+        GO_TEST_TAGS: ${{ inputs.tests_tags != '' && inputs.tests_tags || '' }}
       run: |
         if [ -f ".tests_dot_env" ]; then
           set -a && source .tests_dot_env && set +a
