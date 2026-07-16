@@ -32,7 +32,7 @@ Checkout to target version:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.3.0 && git pull
+git fetch -a && git checkout v0.4.0 && git pull
 git submodule update --recursive --init 
 popd
 ```
@@ -430,11 +430,18 @@ Do next checks:
 - `go/check/no-tidy`
 - `go/test`
 - `go/test/race` (if need)
+- `go/lint`
 
-### Usage
+#### Deps actions
+
+Action uses:
+- actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 - v7.0.0
+- actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 - v6.5.0
+
+#### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/test@v0.3.0
+- uses: makefile-inc/go/.github/actions/test@v0.4.0
   with:
     # Go version for actions/setup-go like `1.26.x`.
     # If do not need to setup go pass empty string.
@@ -487,7 +494,7 @@ Do next checks:
     tests_tags: ''
 ```
 
-### Examples
+#### Examples
 
 - Pull request check workflow
 
@@ -507,7 +514,7 @@ jobs:
 
     steps:
     - name: Run tests
-      uses: makefile-inc/go/.github/actions/test@v0.3.0
+      uses: makefile-inc/go/.github/actions/test@v0.4.0
       with:
         checkout: "_pull_request_ref_"
         run_race_tests: "with_tests"

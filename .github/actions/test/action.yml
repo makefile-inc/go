@@ -85,6 +85,7 @@ runs:
       fi
       echo "Checkout ref is '$ref_to_output'"
       echo "ref=$ref_to_output" >> "$GITHUB_OUTPUT"
+
   - name: Checkout
     if: ${{ steps.checkout_resolve.outputs.ref != '' }}
     uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -92,23 +93,28 @@ runs:
       fetch-depth: 0
       submodules: "recursive"
       ref: ${{ steps.checkout_resolve.outputs.ref }}
+
   - name: Setup Go
     if: ${{ inputs.go_version != '' }}
     uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
     with:
       go-version: ${{ inputs.go_version }}
+
   - name: Check .gitignore
     if: ${{ inputs.check_gitignore == 'true' }}
     shell: bash
     run: make go/check/gitignore
+
   - name: Check go mod tidy not produce diff
     shell: bash
     run: make go/check/no-tidy
+
   - name: Write envs file
     if: ${{ inputs.tests_envs != '' }}
     shell: bash
     run: |
       echo '${{ inputs.tests_envs }}' > .tests_dot_env
+
   - name: Run tests without race
     if: ${{ inputs.run_race_tests != 'without_tests' }}
     shell: bash
@@ -120,6 +126,7 @@ runs:
         set -a && source .tests_dot_env && set +a
       fi
       make go/test
+
   - name: Run tests with race
     if: ${{ inputs.run_race_tests != 'no' }}
     shell: bash
@@ -131,6 +138,11 @@ runs:
         set -a && source .tests_dot_env && set +a
       fi
       make go/test/race
+
+  - name: Lint code
+    shell: bash
+    run: make go/lint
+
   - name: Cleanup
     if: always()
     shell: bash
