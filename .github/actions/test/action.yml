@@ -1,6 +1,8 @@
 name: 'Test go code'
 description: | 
   Test go code with https://github.com/makefile-inc/go
+  This action does not build any binaries. If you need check build binary
+  before or after testing use your own steps. 
   By default, action will checkout repo on github.event.pull_request.head.sha
   if handle `PullRequestEvent` with `submodules: "recursive"` option.
 inputs:
