@@ -97,42 +97,42 @@ runs:
     uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
     with:
       go-version: ${{ inputs.go_version }}
-    - name: Check .gitignore
-      if: ${{ inputs.check_gitignore == 'true' }}
-      shell: bash
-      run: make go/check/gitignore
-    - name: Check go mod tidy not produce diff
-      shell: bash
-      run: make go/check/no-tidy
-    - name: Write envs file
-      if: ${{ inputs.tests_envs != '' }}
-      shell: bash
-      run: |
-        echo '${{ inputs.tests_envs }}' > .tests_dot_env
-    - name: Run tests without race
-      if: ${{ inputs.run_race_tests != 'without_tests' }}
-      shell: bash
-      env:
-        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
-        GO_TEST_TAGS: ${{ inputs.tests_tags }}
-      run: |
-        if [ -f ".tests_dot_env" ]; then
-          set -a && source .tests_dot_env && set +a
-        fi
-        make go/test
-    - name: Run tests with race
-      if: ${{ inputs.run_race_tests != 'no' }}
-      shell: bash
-      env:
-        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
-        GO_TEST_TAGS: ${{ inputs.tests_tags }}
-      run: |
-        if [ -f ".tests_dot_env" ]; then
-          set -a && source .tests_dot_env && set +a
-        fi
-        make go/test/race
-    - name: Cleanup
-      if: always()
-      shell: bash
-      run: |
-        rm -f ".tests_dot_env"
+  - name: Check .gitignore
+    if: ${{ inputs.check_gitignore == 'true' }}
+    shell: bash
+    run: make go/check/gitignore
+  - name: Check go mod tidy not produce diff
+    shell: bash
+    run: make go/check/no-tidy
+  - name: Write envs file
+    if: ${{ inputs.tests_envs != '' }}
+    shell: bash
+    run: |
+      echo '${{ inputs.tests_envs }}' > .tests_dot_env
+  - name: Run tests without race
+    if: ${{ inputs.run_race_tests != 'without_tests' }}
+    shell: bash
+    env:
+      GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
+      GO_TEST_TAGS: ${{ inputs.tests_tags }}
+    run: |
+      if [ -f ".tests_dot_env" ]; then
+        set -a && source .tests_dot_env && set +a
+      fi
+      make go/test
+  - name: Run tests with race
+    if: ${{ inputs.run_race_tests != 'no' }}
+    shell: bash
+    env:
+      GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
+      GO_TEST_TAGS: ${{ inputs.tests_tags }}
+    run: |
+      if [ -f ".tests_dot_env" ]; then
+        set -a && source .tests_dot_env && set +a
+      fi
+      make go/test/race
+  - name: Cleanup
+    if: always()
+    shell: bash
+    run: |
+      rm -f ".tests_dot_env"
