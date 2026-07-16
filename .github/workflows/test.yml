@@ -67,89 +67,95 @@ on:
         required: false
         default: ''
         type: string
-
+      runner:
+        description: |
+          Runner name
+        required: false
+        default: ''
+        type: string
 jobs:
-  steps:
-  - name: Checkout ref resolve
-    id: "checkout_resolve"
-    env:
-      ref_from_user: ${{ inputs.checkout }}
-      ref_from_pull: ${{ (github.event.type == 'PullRequestEvent' && github.event.pull_request) && github.event.pull_request.head.sha || '' }}
-    shell: bash
-    run: |
-      ref_to_output="$ref_from_user"
-      if [ -n "$ref_to_output" ]; then
-        if [[ "$ref_to_output" == "_pull_request_ref_" ]]; then
-          if [ -z "$ref_from_pull" ]; then
-            echo -e "\033[0;31mPassed use ref from pull request but pull request ref is empty\033[0m"
-            exit 1
+  test_go_code:
+    steps:
+    - name: Checkout ref resolve
+      id: "checkout_resolve"
+      env:
+        ref_from_user: ${{ inputs.checkout }}
+        ref_from_pull: ${{ (github.event.type == 'PullRequestEvent' && github.event.pull_request) && github.event.pull_request.head.sha || '' }}
+      shell: bash
+      run: |
+        ref_to_output="$ref_from_user"
+        if [ -n "$ref_to_output" ]; then
+          if [[ "$ref_to_output" == "_pull_request_ref_" ]]; then
+            if [ -z "$ref_from_pull" ]; then
+              echo -e "\033[0;31mPassed use ref from pull request but pull request ref is empty\033[0m"
+              exit 1
+            fi
+            ref_to_output="$ref_from_pull"
           fi
-          ref_to_output="$ref_from_pull"
         fi
-      fi
-      echo "Checkout ref is '$ref_to_output'"
-      echo "ref=$ref_to_output" >> "$GITHUB_OUTPUT"
+        echo "Checkout ref is '$ref_to_output'"
+        echo "ref=$ref_to_output" >> "$GITHUB_OUTPUT"
 
-  - name: Checkout
-    if: ${{ steps.checkout_resolve.outputs.ref != '' }}
-    uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-    with:
-      fetch-depth: 0
-      submodules: "recursive"
-      ref: ${{ steps.checkout_resolve.outputs.ref }}
+    - name: Checkout
+      if: ${{ steps.checkout_resolve.outputs.ref != '' }}
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      with:
+        fetch-depth: 0
+        submodules: "recursive"
+        ref: ${{ steps.checkout_resolve.outputs.ref }}
 
-  - name: Setup Go
-    if: ${{ inputs.go_version != '' }}
-    uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
-    with:
-      go-version: ${{ inputs.go_version }}
+    - name: Setup Go
+      if: ${{ inputs.go_version != '' }}
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+      with:
+        go-version: ${{ inputs.go_version }}
 
-  - name: Check go mod tidy not produce diff
-    shell: bash
-    run: make go/check/no-tidy
-
-  - name: Write envs file
-    if: ${{ inputs.tests_envs != '' }}
-    shell: bash
-    run: |
-      echo '${{ inputs.tests_envs }}' > .tests_dot_env
-
-  - parallel:
-    - name: Run tests without race
-      if: ${{ inputs.run_race_tests != 'without_tests' }}
+    - name: Check go mod tidy not produce diff
       shell: bash
-      env:
-        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
-        GO_TEST_TAGS: ${{ inputs.tests_tags }}
+      run: make go/check/no-tidy
+
+    - name: Write envs file
+      if: ${{ inputs.tests_envs != '' }}
+      shell: bash
       run: |
-        if [ -f ".tests_dot_env" ]; then
-          set -a && source .tests_dot_env && set +a
-        fi
-        make go/test
+        echo '${{ inputs.tests_envs }}' > .tests_dot_env
 
-    - name: Run tests with race
-      if: ${{ inputs.run_race_tests != 'no' }}
+    - parallel:
+      - name: Run tests without race
+        if: ${{ inputs.run_race_tests != 'without_tests' }}
+        shell: bash
+        env:
+          GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
+          GO_TEST_TAGS: ${{ inputs.tests_tags }}
+        run: |
+          if [ -f ".tests_dot_env" ]; then
+            set -a && source .tests_dot_env && set +a
+          fi
+          make go/test
+
+      - name: Run tests with race
+        if: ${{ inputs.run_race_tests != 'no' }}
+        shell: bash
+        env:
+          GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
+          GO_TEST_TAGS: ${{ inputs.tests_tags }}
+        run: |
+          if [ -f ".tests_dot_env" ]; then
+            set -a && source .tests_dot_env && set +a
+          fi
+          make go/test/race
+
+    - parallel:
+      - name: Lint code
+        shell: bash
+        run: make go/lint
+      - name: Check .gitignore
+        if: ${{ inputs.check_gitignore == 'true' }}
+        shell: bash
+        run: make go/check/gitignore
+
+    - name: Cleanup
+      if: always()
       shell: bash
-      env:
-        GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
-        GO_TEST_TAGS: ${{ inputs.tests_tags }}
       run: |
-        if [ -f ".tests_dot_env" ]; then
-          set -a && source .tests_dot_env && set +a
-        fi
-        make go/test/race
-
-  - parallel:
-    - name: Lint code
-      shell: bash
-      run: make go/lint
-    - name: Check .gitignore
-      if: ${{ inputs.check_gitignore == 'true' }}
-      shell: bash
-      run: make go/check/gitignore
-
-  - name: Cleanup
-    if: always()
-    shell: bash
-    run: |
-      rm -f ".tests_dot_env"
+        rm -f ".tests_dot_env"
