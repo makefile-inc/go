@@ -166,10 +166,12 @@ tmp-go-tests: ## Create tmp dir $(CURDIR)/tmp-go-tests for output tests results.
 go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go modules and pretty print tests results.
 	@##~ GO_TEST_RACE=true - run tests with -race flag. By default: run without race
 	@##~ GO_TEST_FORCE_RESTART=true - force rerun tests without using cache. By default: run with cache
+	@##~ GO_TEST_TAGS=TAGS - comma-separated tags to pass in tests. Optional
 	@##~ GO_TEST_PARALLEL=NUMBER - if passed run parallel tests packages. 
 	@##~   For disable parallelism pass GO_TEST_PARALLEL=1
 	@##~   By default: use default go test parallelism mechanics
 	@${INCLUDE_ECHO} \
+	${INCLUDE_SPLIT} \
 	race_arg=""; \
 	if [ -n "$$GO_TEST_RACE" ]; then \
 		echo_info "Run race tests..."; \
@@ -182,6 +184,30 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 	parallel_arg=""; \
 	if [ -n "$$GO_TEST_PARALLEL" ]; then \
 		parallel_arg="-p $$GO_TEST_PARALLEL"; \
+		parallel_msg="With parallelism '$$GO_TEST_PARALLEL'"; \
+		if [ "$$GO_TEST_PARALLEL" = "1" ]; then \
+			parallel_msg="Parallelism disabled"; \
+		fi; \
+		echo_info "$$parallel_msg"; \
+	fi; \
+	tags_arg=""; \
+	if [ -n "$$GO_TEST_TAGS" ]; then \
+		split_by_comma go_tags_parsed "$$GO_TEST_TAGS"; \
+		go_tags=""; \
+		for tg in "$${go_tags_parsed[@]}"; do \
+			t_tg="$$(trim_spaces "$$tg")"; \
+			if [ -z "$$t_tg" ]; then \
+				continue; \
+			fi; \
+			if [ -n "$$go_tags" ]; then \
+				go_tags="$${go_tags},"; \
+			fi; \
+			go_tags="$${go_tags}$${t_tg}"; \
+		done; \
+		if [ -n "$$go_tags" ]; then \
+			tags_arg="-tags=$$go_tags"; \
+			echo_info "With tags: $$go_tags"; \
+		fi; \
 	fi; \
 	jq_bin="$(JQ_BIN_FULL)"; \
 	declare -A succeeded_durations; \
@@ -194,13 +220,13 @@ go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go mo
 		out_file="$(GO_TESTS_TMP_DIR)/$${file_nano}-$${RANDOM}.tst.res"; \
 		pushd . > /dev/null; \
 		full_path="$$(realpath "$$ii")"; \
-		echo_info "--- Run tests in $$full_path ---"; \
+		echo_info "--- Run tests in $${full_path} ---"; \
 		if ! cd "$$full_path"; then \
 			exit_with_err "Cannot cd to $$full_path"; \
 		fi; \
 		start_test_micro="$$(${NOW_MICROSECONDS})"; \
 		is_failed=""; \
-		go test $$force_restart_arg $$race_arg -json -v $$parallel_arg ./... | tee "$$out_file" | "$$jq_bin" -r 'if has("Output") then .Output else "" end' | grep -v '^$$'; \
+		go test $$force_restart_arg $$race_arg -json $$tags_arg -v $$parallel_arg ./... | tee "$$out_file" | "$$jq_bin" -r 'if has("Output") then .Output else "" end' | grep -v '^$$'; \
 		if [ "$${PIPESTATUS[0]}" != "0" ]; then \
 			is_failed="true"; \
 		fi; \
