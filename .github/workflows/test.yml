@@ -71,10 +71,18 @@ on:
         description: |
           Runner name
         required: false
-        default: ''
+        default: 'ubuntu-latest'
         type: string
+      timeout_minutes:
+        description: |
+          Job timeout in minutes
+        required: false
+        default: 5
+        type: number
 jobs:
   test_go_code:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: ${{ inputs.timeout_minutes }}
     steps:
     - name: Checkout ref resolve
       id: "checkout_resolve"
