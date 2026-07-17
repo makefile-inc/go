@@ -147,7 +147,7 @@ function _run_parallel() {
     task_to_pid["$direct_output_task"]="$!"
 
     for p_ts in "${!task_to_out[@]}"; do
-        { $p_ts > "${task_to_out[$p_ts]}"; } 2>&1 &
+        $p_ts &> "${task_to_out[$p_ts]}" &
         task_to_pid["$p_ts"]="$!"
     done
     

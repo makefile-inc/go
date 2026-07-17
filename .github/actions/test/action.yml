@@ -161,9 +161,16 @@ runs:
         exit 1
       fi
 
+      declare -A _tasks_to_msg
+      _tasks_to_msg["do_tests"]="Run tests"
+      _tasks_to_msg["do_with_race"]="Run tests with race"
+
       if [ -f ".tests_dot_env" ]; then
         set -a && source .tests_dot_env && set +a
       fi
+
+      # install deps not in parallel for prevent File busy error
+      make go/test/deps
 
       _run_tasks_and_exit "${tasks[@]}"
 
@@ -191,6 +198,11 @@ runs:
       if [[ "${RUN_GIT_IGNORE:-}" == "true" ]]; then
         tasks+=("do_gitignore")
       fi
+
+
+      declare -A _tasks_to_msg
+      _tasks_to_msg["do_gitignore"]="Check .gitignore"
+      _tasks_to_msg["do_lint"]="Lint go code"
       
       _run_tasks_and_exit "${tasks[@]}"
 
