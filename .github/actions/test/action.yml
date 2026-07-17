@@ -42,9 +42,9 @@ inputs:
       - without_tests - run race tests without no race tests
     required: false
     default: 'no'
-  parallel_tests:
+  tests_parallelism:
     description: |
-      Run tests in parallel (by default).
+      Use `go test` default parallelism mechanics (by default).
       Pass 'false' to run tests with flag `-p 1`
     required: false
     default: 'true'
@@ -63,6 +63,19 @@ inputs:
       Comma-separated tags for run tests.
     required: false
     default: ''
+  parallel:
+    description: |
+      Run tasks in parallel with bash.
+      Uses utils functions from
+        https://gist.github.com/name212/713d715b94a627c2ef41c0425c4ae05b
+      for task runnings.
+      Values:
+      - 'tests' - run race tests and non-race tests in parallel
+      - 'lint' - run gitignore check and lint go-code in parallel
+      - 'all' - tests and lint (it is default)
+      - '' - empty string run all sequentially
+    required: false
+    default: 'all'
 runs:
   using: 'composite'
   steps:
@@ -100,11 +113,6 @@ runs:
     with:
       go-version: ${{ inputs.go_version }}
 
-  - name: Check .gitignore
-    if: ${{ inputs.check_gitignore == 'true' }}
-    shell: bash
-    run: make go/check/gitignore
-
   - name: Check go mod tidy not produce diff
     shell: bash
     run: make go/check/no-tidy
@@ -115,33 +123,76 @@ runs:
     run: |
       echo '${{ inputs.tests_envs }}' > .tests_dot_env
 
-  - name: Run tests without race
-    if: ${{ inputs.run_race_tests != 'without_tests' }}
+  - name: Run tests
     shell: bash
     env:
-      GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
+      GO_TEST_PARALLEL: ${{ inputs.tests_parallelism == 'true' && '' || '1' }}
       GO_TEST_TAGS: ${{ inputs.tests_tags }}
+      RUN_IN_PARALLEL: ${{ (inputs.parallel == 'all' || inputs.parallel == 'tests') && 'true' || '' }}
+      TMPDIR: ${{ runner.temp }}
+      RUN_NO_RACE: ${{ inputs.run_race_tests != 'without_tests' && 'true' || '' }}
+      RUN_WITH_RACE: ${{ inputs.run_race_tests != 'no' && 'true' || '' }}
     run: |
+      source ${{ github.action_path }}/parallel.inc.sh
+
+      function do_tests() {
+        make go/test
+        return $?
+      }
+
+      function do_with_race() {
+        make go/test/race
+        return $?
+      }
+
+      tasks=()
+
+      if [[ "${RUN_NO_RACE:-}" == "true" ]]; then
+        tasks+=("do_tests")
+      fi
+
+      if [[ "${RUN_WITH_RACE:-}" == "true" ]]; then
+        echo "Race tests enabled"
+        tasks+=("do_with_race")
+      fi
+
+      if [ "${#tasks[@]}" -eq 0 ]; then
+        echo "Got empty tasks for run"
+        exit 1
+      fi
+
       if [ -f ".tests_dot_env" ]; then
         set -a && source .tests_dot_env && set +a
       fi
-      make go/test
 
-  - name: Run tests with race
-    if: ${{ inputs.run_race_tests != 'no' }}
+      _run_tasks_and_exit "${tasks[@]}"
+
+  - name: Lint
     shell: bash
     env:
-      GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
-      GO_TEST_TAGS: ${{ inputs.tests_tags }}
+      RUN_GIT_IGNORE: ${{ inputs.check_gitignore == 'true' && 'true' || '' }}
+      RUN_IN_PARALLEL: ${{ (inputs.parallel == 'all' || inputs.parallel == 'lint') && 'true' || '' }}
+      TMPDIR: ${{ runner.temp }}
     run: |
-      if [ -f ".tests_dot_env" ]; then
-        set -a && source .tests_dot_env && set +a
-      fi
-      make go/test/race
+      source ${{ github.action_path }}/parallel.inc.sh
 
-  - name: Lint code
-    shell: bash
-    run: make go/lint
+      function do_lint() {
+        make go/lint
+        return $?
+      }
+
+      function do_gitignore() {
+        make go/check/gitignore
+        return $?
+      }
+
+      tasks=("do_lint")
+
+      if [[ "${RUN_GIT_IGNORE:-}" == "true" ]]; then
+        tasks+=("do_gitignore")
+      fi
+      
+      _run_tasks_and_exit "${tasks[@]}"
 
   - name: Cleanup
     if: always()
