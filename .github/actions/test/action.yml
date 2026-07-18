@@ -86,6 +86,7 @@ runs:
       ref_from_pull: ${{ (github.event.type == 'PullRequestEvent' && github.event.pull_request) && github.event.pull_request.head.sha || '' }}
     shell: bash
     run: |
+      # Resolve checkout ref
       ref_to_output="$ref_from_user"
       if [ -n "$ref_to_output" ]; then
         if [[ "$ref_to_output" == "_pull_request_ref_" ]]; then
@@ -115,12 +116,15 @@ runs:
 
   - name: Check go mod tidy not produce diff
     shell: bash
-    run: make go/check/no-tidy
+    run: |
+      # Check go mod tidy not produce diff
+      make go/check/no-tidy
 
   - name: Write envs file
     if: ${{ inputs.tests_envs != '' }}
     shell: bash
     run: |
+      # Write tests envs to file
       echo '${{ inputs.tests_envs }}' > .tests_dot_env
 
   - name: Run tests
@@ -133,6 +137,7 @@ runs:
       RUN_NO_RACE: ${{ inputs.run_race_tests != 'without_tests' && 'true' || '' }}
       RUN_WITH_RACE: ${{ inputs.run_race_tests != 'no' && 'true' || '' }}
     run: |
+      # Run tests
       source ${{ github.action_path }}/parallel.inc.sh
 
       function do_tests() {
@@ -181,6 +186,7 @@ runs:
       RUN_IN_PARALLEL: ${{ (inputs.parallel == 'all' || inputs.parallel == 'lint') && 'true' || '' }}
       TMPDIR: ${{ runner.temp }}
     run: |
+      # Lint
       source ${{ github.action_path }}/parallel.inc.sh
 
       function do_lint() {
@@ -210,4 +216,5 @@ runs:
     if: always()
     shell: bash
     run: |
+      # Cleanup
       rm -f ".tests_dot_env"
