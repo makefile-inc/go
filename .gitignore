@@ -1,4 +1,5 @@
 bin/
-build/
+.build/
+.release/
 tmp-go-tests/
 *.tst.res
