@@ -1,14 +1,40 @@
 name: 'Release go application'
 description: | 
-  Create release with go-application. Do next:
-  - build code with `make` target (pass PROJECT_NAME as inputs.project as env to make) 
-  - test code
-  - prepare artifacts if needs
-  - prepare build artifact
-  - create release with release name in draft. 
+  Create release with go-application.
+  For create/update release you can use your own token with pass via
+  `inputs.token`. If not passed, use `secrets.GITHUB_TOKEN`.
+  For successful upload, token or job should set next permissions:
+  - contents: write
+  Example for job:
+  ```
+  jobs:
+    release:
+      runs-on: ubuntu-latest
+      # Define required permissions here
+      permissions:
+        contents: write
+  ```
+
+  Do next:
+  - check that release not exists or in draft and not immutable
+    to prevent break another releases.
+  - if release not exists prepare release notices file
+  - checkout to target ref to build
+  - creates temp build dir with random suffix
+  - build code with `make` target passed in `inputs.build_target`. Pass to target :
+    - PROJECT_NAME as `inputs.project` as env
+    - SET_BUILD_PATH as created build dir as env
+  - test code (if `inputs.tests_envs` passed created envs file with random suffix)
+  - if additional artifacts script or target passed:
+    - creates temp dir for artifacts
+    - pass created temp dir to script or make via `RELEASE_GO_ARTIFACTS_DIR` env
+  - creates temp release artifacts dir with random prefix
+    and prepare release artifact with `make` target `common/release` 
+  - create release with `inputs.release_name` in draft. 
     If release already created, only upload artifacts.
     It helpful for use multiple action calls, for example 
     Build api-server and migration.
+  - cleanup all created files and dirs
 inputs:
   go_version:
     description: |
@@ -24,12 +50,15 @@ inputs:
 
   project:
     description: |
-      Project to build
+      Project name (binary target) to build.
     required: true
 
   build_target:
     description: |
       `make` target for build.
+      Step creates build dir and pass to target via `SET_BUILD_PATH` env.
+      Also, step pass `inputs.project` to target via `PROJECT_NAME` env.
+
       If need add build tags, variables or module path, please use  
       GO_TARGET, GO_TARGET_MODULE, GO_BUILD_TAGS, GO_BUILD_VARIABLES GO_BUILD_DYNAMIC params for target.
     required: true
@@ -70,7 +99,18 @@ inputs:
   token:
     description: |
       Token for create release. 
-      If not passed will use ${{ secrets.GITHUB_TOKEN }}
+      If not passed will use `secrets.GITHUB_TOKEN`.
+      Token or job should set next permissions:
+      - contents: write
+      Example for job:
+      ```
+      jobs:
+        release:
+          runs-on: ubuntu-latest
+          # Define required permissions here
+          permissions:
+            contents: write
+      ```
     required: false
     default: ''
 
@@ -92,6 +132,112 @@ inputs:
 runs:
   using: 'composite'
   steps:
+  - name: Check release
+    id: do_release
+    shell: bash
+    env:
+      REPO_NAME: ${{ github.repository }}
+      RELEASE_NAME: ${{ inputs.release_name }}
+      TARGET_REF: ${{ inputs.target_ref }}
+      RELEASE_NOTES: ${{ inputs.release_notes }}
+      GH_TOKEN: ${{ inputs.token != '' && inputs.token || secrets.GITHUB_TOKEN }}
+    run: |
+      # Check release is not released
+
+      function exit_with_err() {
+        echo -e "\033[0;31m${1:-}\033[0m"
+        exit 1
+      }
+
+      function echo_info() {
+        echo -e "\033[0;32m${1:-}\033[0m"
+      }
+
+      if [ -z "$RELEASE_NAME" ]; then
+        exit_with_err "Release name is empty"
+      fi
+
+      if [ -z "$REPO_NAME" ]; then
+        exit_with_err "Repo name is empty"
+      fi
+
+      if [ -z "$TARGET_REF" ]; then
+        exit_with_err "Target ref is empty"
+      fi
+
+      release_out=""
+      got_release=""
+
+      sleep_time="3"
+      attempts="5"
+      
+      jq_query=".[] | select(.tagName == \"$RELEASE_NAME\") | \"found,\(.isDraft),\(.isImmutable)\""
+      
+      for atmp in $(seq "$attempts"); do
+        if ! release_out="$(gh release list --repo "$REPO_NAME" --limit 100 --json tagName,isDraft,isImmutable --jq "$jq_query")"; then
+          echo -e "\033[0;33mCannot get releases list. Attempt ${atmp}. Sleep ${sleep_time} before next attempt\033[0m"
+          if [[ "$atmp" != "$attempts" ]]; then
+            sleep "$sleep_time"
+          fi
+          continue
+        fi
+        got_release="true"
+        break
+      done
+
+      if [ -z "$got_release" ]; then
+        exit_with_err "Timeout while get releases list after $attempts attempts"
+      fi
+
+      echo_info "Got release settings $release_out"
+
+      action="create"
+      notes_file=""
+
+      if [ -n "$release_out" ]; then
+        IFS=',' read -r -a release_settings <<< "$release_out"
+
+        if [[ "${#release_settings[@]}" != 3 ]]; then
+          exit_with_err "Cannot parse release settings $release_out"
+        fi
+
+        is_draft="${release_settings[1]}"
+        is_immutable="${release_settings[2]}"
+         
+        if [[ "$is_immutable" == "true" ]]; then
+          exit_with_err "Release $RELEASE_NAME is immutable. Cannot continue"
+        fi
+
+        if [[ "$is_draft" == "false" ]]; then
+          exit_with_err "Release $RELEASE_NAME is is not in draft. Cannot continue"
+        fi
+
+        echo_info "Release $RELEASE_NAME found and in draft and not immutable. Will update"
+        action="upload"
+      else
+        if [ -n "$RELEASE_NOTES" ]; then
+          if [[ "$RELEASE_NOTES" == md_file::* ]]; then
+            notes_file="${RELEASE_NOTES#md_file::}"
+            if [ ! -f "$notes_file" ]; then
+              exit_with_err "md file '$notes_file' not found"
+            fi
+            echo_info "Found passed release notes file $notes_file"
+          else
+            notes_file="$(realpath .)"
+            notes_file="${notes_file}/.release_notes_for_upload_${RANDOM}"
+            "$notes_file" <<<"$RELEASE_NOTES"
+            echo_info "Notes file $notes_file was created"
+          fi
+        fi
+
+        echo_info "Release $RELEASE_NAME not found. Will create"
+        action="create"
+      fi
+      
+      echo "notes_file=${notes_file}" >> "$GITHUB_OUTPUT"
+      echo "CLEANUP_PATH_NOTES_FILE=${notes_file}" >> "$GITHUB_ENV"
+      echo "action=${action}" >> "$GITHUB_OUTPUT"
+
   - name: Checkout
     if: ${{ steps.checkout_resolve.outputs.ref != '' }}
     uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -111,16 +257,16 @@ runs:
     shell: bash
     run: |
       # Build application
+
       build_dir="$(realpath .)"
-      build_dir="${build_dir}/.build_release"
+      build_dir="${build_dir}/.build_release_$RANDOM"
 
-      export SET_BUILD_PATH="$build_dir"
-      export PROJECT_NAME="${{ inputs.project }}"
-      
-      make "${{ inputs.build_target }}"
       echo "path=$build_dir" >> "$GITHUB_OUTPUT"
+      echo "CLEANUP_PATH_BUILD_DIR=${build_dir}" >> "$GITHUB_ENV"
 
-  - name: Write envs file for tests
+      make "${{ inputs.build_target }}" SET_BUILD_PATH="$build_dir" PROJECT_NAME="${{ inputs.project }}"
+
+  - name: Write tests envs to file
     if: ${{ inputs.tests_envs != '' }}
     id: test_envs
     shell: bash
@@ -128,10 +274,11 @@ runs:
       # Write tests envs to file
 
       envs_file="$(realpath .)"
-      envs_file="${envs_dir}/.tests_dot_env"
+      envs_file="${envs_dir}/.tests_dot_env_$RANDOM"
 
       echo '${{ inputs.tests_envs }}' > "$envs_file"
       echo "path=$envs_file" >> "$GITHUB_OUTPUT"
+      echo "CLEANUP_PATH_TEST_ENVS=${envs_file}" >> "$GITHUB_ENV"
 
   - name: Run tests
     shell: bash
@@ -143,6 +290,7 @@ runs:
       TMPDIR: ${{ runner.temp }}
     run: |
       # Run tests
+
       if [ -n "$ENVS_FILE" ]; then
         if [ -f "$ENVS_FILE" ]; then
           set -a && source "$ENVS_FILE" && set +a
@@ -157,13 +305,16 @@ runs:
     if: ${{ inputs.prepare_artifacts != '' }}
     run: |
       # Create artifacts dir
-      dir_name=".release_artifacts"
+
+      dir_name="$(realpath .)"
+      dir_name="${dir_name}/.artifacts_dir_$RANDOM"
+      
       mkdir -p "$dir_name"
-      if ! dir_name="$(realpath "$dir_name")"; then
-        echo "Cannot get real path for artifacts dir"
-        exit 1
-      fi
+      
+      echo "Additional artifacts dir '$dir_name'"
+
       echo "path=$dir_name" >> "$GITHUB_OUTPUT"
+      echo "CLEANUP_PATH_ADDITIONAL_ARTIFACTS=${dir_name}" >> "$GITHUB_ENV"
 
   - name: Prepare additional artifacts via script
     shell: bash
@@ -172,6 +323,7 @@ runs:
       RELEASE_GO_ARTIFACTS_DIR: ${{ steps.artifacts_dir.outputs.path }}
     run: |
       # Prepare artifacts via script
+
       ${{ inputs.prepare_artifacts }}
 
   - name: Prepare additional artifacts via make
@@ -182,6 +334,7 @@ runs:
       TARGET_FOR_RUN_PREPARE: ${{ inputs.prepare_artifacts }}
     run: |
       # Prepare artifacts via make
+
       target_name="${TARGET_FOR_RUN_PREPARE#make::}"
       if [ -z "$target_name" ]; then
         echo "Got empty make target '$TARGET_FOR_RUN_PREPARE' for prepare artifact after trim suffix 'make::'"
@@ -200,54 +353,83 @@ runs:
       ADDITIONAL_ARTIFACTS_DIR: ${{ steps.artifacts_dir.outputs.path }}
     run: |
       # Prepare release artifacts
+
       release_dir="$(realpath .)"
-      release_dir="${release_dir}/.release_out"
+      release_dir="${release_dir}/.release_out_$RANDOM"
 
-      export SET_RELEASE_PATH="$release_dir"
-
-      make common/release
+      echo "Release artifacts dir '$release_dir'"
 
       echo "path=$release_dir" >> "$GITHUB_OUTPUT"
+      echo "CLEANUP_PATH_RELEASE_DIR=${release_dir}" >> "$GITHUB_ENV"
       echo "upload_dir=${release_dir}/${RELEASE_NAME}" >> "$GITHUB_OUTPUT"
+
+      make common/release SET_RELEASE_PATH="$release_dir"
 
   - name: Create/update release
     shell: bash
     id: upload
-    if: ${{ inputs.prepare_artifacts != '' && startsWith(inputs.prepare_artifacts, 'make::') }}
     env:
       REPO_NAME: ${{ github.repository }}
       RELEASE_NAME: ${{ inputs.release_name }}
       TARGET_REF: ${{ inputs.target_ref }}
-      RELEASE_NOTES: ${{ inputs.release_notes }}
+      NOTES_FILE: ${{ steps.do_release.outputs.notes_file}}
+      RELEASE_ACTION: ${{ steps.do_release.outputs.action}}
       UPLOAD_DIR: ${{ steps.release_artifact.outputs.upload_dir }}
       GH_TOKEN: ${{ inputs.token != '' && inputs.token || secrets.GITHUB_TOKEN }}
     run: |
       # Create/update release
-      
-      if ! releases_list="$(gh release list --repo "$REPO_NAME" --limit 10 --json tagName --jq '.[].tagName == "$RELEASE_NAME"')"; then
-        echo "Cannot get releases list"
+
+      function exit_with_err() {
+        echo -e "\033[0;31m${1:-}\033[0m"
         exit 1
+      }
+
+      function echo_info() {
+        echo -e "\033[0;32m${1:-}\033[0m"
+      }
+
+      if [ -z "$RELEASE_NAME" ]; then
+        exit_with_err "Release name is empty"
       fi
 
-      if ! grep "true" <<<"$releases_list"; then
-        notes_file=""
-        if [ -n "$RELEASE_NOTES" ]; then
-          if [[ "$RELEASE_NOTES" == md_file::* ]]; then
-            notes_file="${RELEASE_NOTES#md_file::}"
-            if [ ! -f "$notes_file" ]; then
-              echo "md file '$notes_file' not found"
-              exit 1
-            fi
-          else
-            notes_file=".release_notes_for_upload_"
-            "$notes_file" <<<"$RELEASE_NOTES"
-            echo "notes_file=${notes_file}" >> "$GITHUB_OUTPUT"
-          fi
-        fi
+      if [ -z "$REPO_NAME" ]; then
+        exit_with_err "Repo name is empty"
+      fi
 
-        action_params=(
-          "create"
+      if [ -z "$RELEASE_ACTION" ]; then
+        exit_with_err "Release name is empty"
+      fi
+
+      if [ -z "$TARGET_REF" ]; then
+        exit_with_err "Target ref is empty"
+      fi
+
+      if [ -z "$UPLOAD_DIR" ]; then
+        exit_with_err "Upload dir is empty"
+      fi
+
+      if [ ! -d "$UPLOAD_DIR" ]; then
+        exit_with_err "Upload dir '$UPLOAD_DIR' is not directory"
+      fi
+
+      artifacts_count="$(find "$UPLOAD_DIR" -type f) | wc -l)"
+
+      if [[ "$artifacts_count" == 0 ]]; then
+        exit_with_err "Not found any files for upload"
+      fi
+
+      echo_info "Got release action '$RELEASE_ACTION' for release '$RELEASE_NAME' in repo '$REPO_NAME' on ref '$TARGET_REF'"
+      echo_info "Artifacts to upload ($artifacts_count):"
+      find "$UPLOAD_DIR" -type f
+
+      action_params=(
+          "$RELEASE_ACTION"
           "$RELEASE_NAME"
+      )
+
+      action_msg="$RELEASE_ACTION"
+      if [[ "$RELEASE_ACTION" == "create" ]]; then
+        action_params=(
           --title
           "$RELEASE_NAME"
           --target
@@ -255,48 +437,52 @@ runs:
           --fail-on-no-commits
           --draft
         )
+        if [ -n "$NOTES_FILE" ]; then
+          if [ ! -f "$NOTES_FILE" ]; then
+            exit_with_err "Release notes file '$NOTES_FILE' not found or not file"
+          fi
 
-        if [ -n "$notes_file" ]; then
           action_params+=("--notes-file")
-          action_params+=("$notes_file")
+          action_params+=("$NOTES_FILE")
         fi
+        echo_info "Do create release"
+        action_msg="Create"
+      elif [[ "$RELEASE_ACTION" == "upload" ]]; then
+        echo_info "Do update release"
+        action_msg="Update"
       else
-        action_params=(
-          "upload"
-          "$RELEASE_NAME"
-        )
+        exit_with_err "Incorrect release action '$RELEASE_ACTION'"
       fi
-
+      
       action_params+=("--repo")
       action_params+=("$REPO_NAME")
 
-      if ! gh release "${action_params[@]}" "${UPLOAD_DIR}/"*; then
-        echo "Cannot ${action_params[0]} release $RELEASE_NAME"
-        exit 1
+      sleep_time="3"
+      attempts="5"
+
+      action_done=""
+      for atmp in $(seq "$attempts"); do
+        find "${UPLOAD_DIR}" -maxdepth 1 -type f -print0 | xargs -0 gh release "${action_params[@]}"
+        gh_statuses=("${PIPESTATUS[@]}")
+        
+        if [[ "${gh_statuses[0]}" != "0" || "${gh_statuses[1]}" != "0" ]]; then
+          echo -e "\033[0;33mCannot do release action '$action_msg'. Attempt ${atmp}. Sleep ${sleep_time} before next attempt\033[0m"
+          if [[ "$atmp" != "$attempts" ]]; then
+            sleep "$sleep_time"
+          fi
+          continue
+        fi
+        
+        action_done="true"
+        break
+      done
+
+      if [ -z "$action_done" ]; then
+        exit_with_err "Timeout while do releases action '$action_msg' after $attempts attempts"
       fi
 
-      echo -e "\033[0;32m${action_params[0]} release $RELEASE_NAME successful!\033[0m"
+      echo_info "$action_msg release $RELEASE_NAME successful done!"
   
   - name: Cleanup
     if: always()
-    shell: bash
-    env:
-      BUILD_DIR: ${{ steps.build.outputs.path}}
-      ADDITIONAL_ARTIFACTS_DIR: ${{ steps.artifacts_dir.outputs.path}}
-      RELEASE_ARTIFACTS_DIR: ${{ steps.release_artifact.outputs.path}}
-      NOTES_FILE: ${{ steps.upload.outputs.notes_file}}
-      ENVS_FILE: ${{ steps.test_envs.outputs.path}}
-    run: |
-      # Cleanup
-      to_remove=(
-        "$BUILD_DIR"
-        "$ADDITIONAL_ARTIFACTS_DIR"
-        "$RELEASE_ARTIFACTS_DIR"
-        "$NOTES_FILE"
-        "$ENVS_FILE"
-      )
-      for ff in "${to_remove[@]}"; do
-        if [ -n "$ff" ]; then
-          rm -rf "$ff"
-        fi
-      done
+    uses: name212/action-cleanup@377b123439a8ed3ada3d9553857d2a0a7bc3fcf9 # v2

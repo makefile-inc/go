@@ -87,6 +87,7 @@ runs:
     shell: bash
     run: |
       # Resolve checkout ref
+
       ref_to_output="$ref_from_user"
       if [ -n "$ref_to_output" ]; then
         if [[ "$ref_to_output" == "_pull_request_ref_" ]]; then
@@ -118,14 +119,21 @@ runs:
     shell: bash
     run: |
       # Check go mod tidy not produce diff
+
       make go/check/no-tidy
 
-  - name: Write envs file
+  - name: Write test envs to file
+    id: test_envs
     if: ${{ inputs.tests_envs != '' }}
     shell: bash
     run: |
       # Write tests envs to file
-      echo '${{ inputs.tests_envs }}' > .tests_dot_env
+
+      envs_file="$(realpath .)"
+      envs_file="${envs_dir}/.tests_dot_env_$RANDOM"
+
+      echo '${{ inputs.tests_envs }}' > "$envs_file"
+      echo "CLEANUP_PATH_TEST_ENVS=$envs_file" >> "$GITHUB_ENV"
 
   - name: Run tests
     shell: bash
@@ -133,11 +141,13 @@ runs:
       GO_TEST_PARALLEL: ${{ inputs.tests_parallelism == 'true' && '' || '1' }}
       GO_TEST_TAGS: ${{ inputs.tests_tags }}
       RUN_IN_PARALLEL: ${{ (inputs.parallel == 'all' || inputs.parallel == 'tests') && 'true' || '' }}
-      TMPDIR: ${{ runner.temp }}
+      ENVS_FILE: ${{ steps.test_envs.outputs.path }}
       RUN_NO_RACE: ${{ inputs.run_race_tests != 'without_tests' && 'true' || '' }}
       RUN_WITH_RACE: ${{ inputs.run_race_tests != 'no' && 'true' || '' }}
+      TMPDIR: ${{ runner.temp }}
     run: |
       # Run tests
+
       source ${{ github.action_path }}/parallel.inc.sh
 
       function do_tests() {
@@ -170,8 +180,10 @@ runs:
       _tasks_to_msg["do_tests"]="Run tests"
       _tasks_to_msg["do_with_race"]="Run tests with race"
 
-      if [ -f ".tests_dot_env" ]; then
-        set -a && source .tests_dot_env && set +a
+      if [ -n "$ENVS_FILE" ]; then
+        if [ -f "$ENVS_FILE" ]; then
+          set -a && source "$ENVS_FILE" && set +a
+        fi
       fi
 
       # install deps not in parallel for prevent File busy error
@@ -187,6 +199,7 @@ runs:
       TMPDIR: ${{ runner.temp }}
     run: |
       # Lint
+
       source ${{ github.action_path }}/parallel.inc.sh
 
       function do_lint() {
@@ -214,7 +227,4 @@ runs:
 
   - name: Cleanup
     if: always()
-    shell: bash
-    run: |
-      # Cleanup
-      rm -f ".tests_dot_env"
+    uses: name212/action-cleanup@377b123439a8ed3ada3d9553857d2a0a7bc3fcf9 # v2
