@@ -170,7 +170,7 @@ runs:
       done
 
       if [ -z "$success" ]; then
-        echo -e "\033[0;31mCannot check token with 'gh repo view' command. Timeout\033[0m"
+        echo -e "\033[0;31mTimeout while check token with 'gh repo view' command  after $attempts attempts\033[0m"
         exit 1
       fi
 
@@ -519,10 +519,10 @@ runs:
       done
 
       if [ -z "$action_done" ]; then
-        exit_with_err "Timeout while do releases action '$action_msg' after $attempts attempts"
+        exit_with_err "Timeout while do releases action '$action_msg' for '$RELEASE_NAME' after $attempts attempts"
       fi
 
-      echo_info "$action_msg release $RELEASE_NAME successful done!"
+      echo_info "$action_msg release '$RELEASE_NAME' successful done!"
   
   - name: Cleanup
     if: always()
