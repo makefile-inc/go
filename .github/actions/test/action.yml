@@ -130,7 +130,7 @@ runs:
       # Write tests envs to file
 
       envs_file="$(realpath .)"
-      envs_file="${envs_dir}/.tests_dot_env_$RANDOM"
+      envs_file="${envs_file}/.tests_dot_env_$RANDOM"
 
       echo '${{ inputs.tests_envs }}' > "$envs_file"
       echo "CLEANUP_PATH_TEST_ENVS=$envs_file" >> "$GITHUB_ENV"
