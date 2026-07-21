@@ -88,11 +88,14 @@ inputs:
       If you want to use file, pass param with prefix `md_file::`
     required: true
 
-  run_race_tests:
+  run_tests:
     description: |
-      Run tests with `-race` flag
+      Run tests:
+      - 'yes' - run tests without race (default)
+      - 'race' - run tests with race
+      - 'no' - skip run tests
     required: false
-    default: 'false'
+    default: 'yes'
 
   tests_parallelism:
     description: |
@@ -309,7 +312,7 @@ runs:
       make "${{ inputs.build_target }}" SET_BUILD_PATH="$build_dir" PROJECT_NAME="${{ inputs.project }}"
 
   - name: Write tests envs to file
-    if: ${{ inputs.tests_envs != '' }}
+    if: ${{ inputs.run_tests != 'no' && inputs.tests_envs != '' }}
     id: test_envs
     shell: bash
     run: |
@@ -323,11 +326,12 @@ runs:
       echo "CLEANUP_PATH_TEST_ENVS=${envs_file}" >> "$GITHUB_ENV"
 
   - name: Run tests
+    if: ${{ inputs.run_tests != 'no' }}
     shell: bash
     env:
       GO_TEST_PARALLEL: ${{ inputs.tests_parallelism == 'true' && '' || '1' }}
       GO_TEST_TAGS: ${{ inputs.tests_tags }}
-      GO_TEST_RACE: ${{ inputs.run_race_tests == 'true' && 'true' || '' }}
+      GO_TEST_RACE: ${{ inputs.run_tests == 'race' && 'true' || '' }}
       ENVS_FILE: ${{ steps.test_envs.outputs.path }}
       TMPDIR: ${{ runner.temp }}
     run: |
