@@ -133,6 +133,7 @@ runs:
       envs_file="${envs_file}/.tests_dot_env_$RANDOM"
 
       echo '${{ inputs.tests_envs }}' > "$envs_file"
+      echo "path=${envs_file}" >> "$GITHUB_OUTPUT"
       echo "CLEANUP_PATH_TEST_ENVS=$envs_file" >> "$GITHUB_ENV"
 
   - name: Run tests
