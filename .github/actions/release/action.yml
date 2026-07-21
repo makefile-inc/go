@@ -17,7 +17,7 @@ description: |
       - name: Release
         uses: makefile-inc/go@...
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: !BRACES! secrets.GITHUB_TOKEN !BRACES!
   ```
 
   Do next:
@@ -119,7 +119,7 @@ inputs:
           - name: Release
             uses: makefile-inc/go@...
             with:
-              token: ${{ secrets.GITHUB_TOKEN }}
+              token: !BRACES! secrets.GITHUB_TOKEN !BRACES!
       ```
     required: true
 
