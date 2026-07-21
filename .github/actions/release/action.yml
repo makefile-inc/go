@@ -145,7 +145,7 @@ runs:
     shell: bash
     env:
       GH_TOKEN: ${{ inputs.token }}
-    run:
+    run: |
       # Resolve github token 
 
       if [ -z "$GH_TOKEN" ]; then
