@@ -470,7 +470,7 @@ runs:
 
       action_msg="$RELEASE_ACTION"
       if [[ "$RELEASE_ACTION" == "create" ]]; then
-        action_params=(
+        action_params+=(
           --title
           "$RELEASE_NAME"
           --target
@@ -503,15 +503,17 @@ runs:
 
       action_done=""
       for atmp in $(seq "$attempts"); do
-        find "${UPLOAD_DIR}" -maxdepth 1 -type f -print0 | xargs -0 gh release "${action_params[@]}"
-        gh_statuses=("${PIPESTATUS[@]}")
+        gh_statuses=()
+        find "${UPLOAD_DIR}" -maxdepth 1 -type f -print0 | xargs -0 gh release "${action_params[@]}" || gh_statuses=("${PIPESTATUS[@]}")
         
-        if [[ "${gh_statuses[0]}" != "0" || "${gh_statuses[1]}" != "0" ]]; then
-          echo -e "\033[0;33mCannot do release action '$action_msg'. Attempt ${atmp}. Sleep ${sleep_time} before next attempt\033[0m"
-          if [[ "$atmp" != "$attempts" ]]; then
-            sleep "$sleep_time"
+        if [[ "${#gh_statuses[@]}" != 0 ]]; then
+          if [[ "${gh_statuses[0]}" != "0" || "${gh_statuses[1]}" != "0" ]]; then
+            echo -e "\033[0;33mCannot do release action '$action_msg'. Attempt ${atmp}. Sleep ${sleep_time} before next attempt\033[0m"
+            if [[ "$atmp" != "$attempts" ]]; then
+              sleep "$sleep_time"
+            fi
+            continue
           fi
-          continue
         fi
         
         action_done="true"
