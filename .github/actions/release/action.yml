@@ -267,7 +267,7 @@ runs:
           else
             notes_file="$(realpath .)"
             notes_file="${notes_file}/.release_notes_for_upload_${RANDOM}"
-            echo $RELEASE_NOTES" > "$notes_file"
+            echo "$RELEASE_NOTES" > "$notes_file"
             echo_info "Notes file $notes_file was created"
           fi
         fi
