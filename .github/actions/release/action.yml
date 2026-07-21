@@ -2,17 +2,22 @@ name: 'Release go application'
 description: | 
   Create release with go-application.
   For create/update release you can use your own token with pass via
-  `inputs.token`. If not passed, use `secrets.GITHUB_TOKEN`.
-  For successful upload, token or job should set next permissions:
+  `inputs.token`. For successful upload, token or job should set next permissions:
   - contents: write
+
   Example for job:
-  ```
+  ```yaml
   jobs:
     release:
       runs-on: ubuntu-latest
       # Define required permissions here
       permissions:
         contents: write
+      steps:
+      - name: Release
+        uses: makefile-inc/go@...
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
   ```
 
   Do next:
@@ -99,20 +104,24 @@ inputs:
   token:
     description: |
       Token for create release. 
-      If not passed will use `secrets.GITHUB_TOKEN`.
       Token or job should set next permissions:
       - contents: write
+
       Example for job:
-      ```
+      ```yaml
       jobs:
         release:
           runs-on: ubuntu-latest
           # Define required permissions here
           permissions:
             contents: write
+          steps:
+          - name: Release
+            uses: makefile-inc/go@...
+            with:
+              token: ${{ secrets.GITHUB_TOKEN }}
       ```
-    required: false
-    default: ''
+    required: true
 
   tests_envs:
     description: |
@@ -132,6 +141,39 @@ inputs:
 runs:
   using: 'composite'
   steps:
+  - name: Check github token
+    shell: bash
+    env:
+      GH_TOKEN: ${{ inputs.token }}
+    run:
+      # Resolve github token 
+
+      if [ -z "$GH_TOKEN" ]; then
+        echo -e "\033[0;31minputs.token is empty\033[0m"
+        exit 1
+      fi
+
+      sleep_time="3"
+      attempts="5"
+      
+      success=""
+      for atmp in $(seq "$attempts"); do
+        if ! gh repo view &> /dev/null; then
+          echo -e "\033[0;33mCannot check github token. Attempt ${atmp}. Sleep ${sleep_time} before next attempt\033[0m"
+          if [[ "$atmp" != "$attempts" ]]; then
+            sleep "$sleep_time"
+          fi
+          continue
+        fi
+        success="true"
+        break
+      done
+
+      if [ -z "$success" ]; then
+        echo -e "\033[0;31mCannot check token with 'gh repo view' command. Timeout\033[0m"
+        exit 1
+      fi
+
   - name: Check release
     id: do_release
     shell: bash
@@ -140,7 +182,7 @@ runs:
       RELEASE_NAME: ${{ inputs.release_name }}
       TARGET_REF: ${{ inputs.target_ref }}
       RELEASE_NOTES: ${{ inputs.release_notes }}
-      GH_TOKEN: ${{ inputs.token != '' && inputs.token || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ inputs.token }}
     run: |
       # Check release is not released
 
@@ -375,7 +417,7 @@ runs:
       NOTES_FILE: ${{ steps.do_release.outputs.notes_file}}
       RELEASE_ACTION: ${{ steps.do_release.outputs.action}}
       UPLOAD_DIR: ${{ steps.release_artifact.outputs.upload_dir }}
-      GH_TOKEN: ${{ inputs.token != '' && inputs.token || secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ inputs.token }}
     run: |
       # Create/update release
 
