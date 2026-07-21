@@ -231,7 +231,7 @@ runs:
         exit_with_err "Timeout while get releases list after $attempts attempts"
       fi
 
-      echo_info "Got release settings $release_out"
+      echo_info "Got release settings '$release_out'"
 
       action="create"
       notes_file=""
@@ -267,7 +267,7 @@ runs:
           else
             notes_file="$(realpath .)"
             notes_file="${notes_file}/.release_notes_for_upload_${RANDOM}"
-            "$notes_file" <<<"$RELEASE_NOTES"
+            echo $RELEASE_NOTES" > "$notes_file"
             echo_info "Notes file $notes_file was created"
           fi
         fi
