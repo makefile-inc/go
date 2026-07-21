@@ -453,7 +453,7 @@ runs:
         exit_with_err "Upload dir '$UPLOAD_DIR' is not directory"
       fi
 
-      artifacts_count="$(find "$UPLOAD_DIR" -type f) | wc -l)"
+      artifacts_count="$(find "$UPLOAD_DIR" -type f | wc -l)"
 
       if [[ "$artifacts_count" == 0 ]]; then
         exit_with_err "Not found any files for upload"
