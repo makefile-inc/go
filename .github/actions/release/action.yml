@@ -387,7 +387,6 @@ runs:
   - name: Prepare release artifacts
     shell: bash
     id: release_artifact
-    if: ${{ inputs.prepare_artifacts != '' && startsWith(inputs.prepare_artifacts, 'make::') }}
     env:
       PROJECT_NAME: ${{ inputs.project }}
       RELEASE_NAME: ${{ inputs.release_name }}
