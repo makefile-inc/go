@@ -1,6 +1,6 @@
 name: 'Release go application'
 description: | 
-  Create release with go-application.
+  Create release for go-application.
   For create/update release you can use your own token with pass via
   `inputs.token`. For successful upload, token or job should set next permissions:
   - contents: write
@@ -30,6 +30,7 @@ description: |
     - PROJECT_NAME as `inputs.project` as env
     - SET_BUILD_PATH as created build dir as env
   - test code (if `inputs.tests_envs` passed created envs file with random suffix)
+    you can disable tests with pass `inputs.run_tests: 'no'`
   - if additional artifacts script or target passed:
     - creates temp dir for artifacts
     - pass created temp dir to script or make via `RELEASE_GO_ARTIFACTS_DIR` env
@@ -50,12 +51,35 @@ inputs:
 
   target_ref:
     description: |
-      Checkout repo to ref. 
+      Checkout repo to ref: branch, commit or tag.
+    required: true
+
+  token:
+    description: |
+      Token for create release. 
+      Token or job should set next permissions:
+      - contents: write
+
+      Example for job:
+      ```yaml
+      jobs:
+        release:
+          runs-on: ubuntu-latest
+          # Define required permissions here
+          permissions:
+            contents: write
+          steps:
+          - name: Release
+            uses: makefile-inc/go@...
+            with:
+              token: !BRACES! secrets.GITHUB_TOKEN !BRACES!
+      ```
     required: true
 
   project:
     description: |
       Project name (binary target) to build.
+      Passed as env `PROJECT_NAME` to build and prepare additional artifacts.
     required: true
 
   build_target:
@@ -63,9 +87,9 @@ inputs:
       `make` target for build.
       Step creates build dir and pass to target via `SET_BUILD_PATH` env.
       Also, step pass `inputs.project` to target via `PROJECT_NAME` env.
-
       If need add build tags, variables or module path, please use  
-      GO_TARGET, GO_TARGET_MODULE, GO_BUILD_TAGS, GO_BUILD_VARIABLES GO_BUILD_DYNAMIC params for target.
+      `GO_TARGET`, `GO_TARGET_MODULE`, `GO_BUILD_TAGS`, `GO_BUILD_VARIABLES`, `GO_BUILD_DYNAMIC`
+      params for target in makefile or pass via `env`.
     required: true
 
   prepare_artifacts:
@@ -103,28 +127,6 @@ inputs:
       Pass 'false' to run tests with flag `-p 1`
     required: false
     default: 'true'
-
-  token:
-    description: |
-      Token for create release. 
-      Token or job should set next permissions:
-      - contents: write
-
-      Example for job:
-      ```yaml
-      jobs:
-        release:
-          runs-on: ubuntu-latest
-          # Define required permissions here
-          permissions:
-            contents: write
-          steps:
-          - name: Release
-            uses: makefile-inc/go@...
-            with:
-              token: !BRACES! secrets.GITHUB_TOKEN !BRACES!
-      ```
-    required: true
 
   tests_envs:
     description: |
@@ -284,8 +286,8 @@ runs:
       echo "action=${action}" >> "$GITHUB_OUTPUT"
 
   - name: Checkout
-    if: ${{ steps.checkout_resolve.outputs.ref != '' }}
-    uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    if: ${{ steps.target_ref != '' }}
+    uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     with:
       fetch-depth: 0
       submodules: "recursive"
@@ -293,7 +295,7 @@ runs:
 
   - name: Setup Go
     if: ${{ inputs.go_version != '' }}
-    uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+    uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
     with:
       go-version: ${{ inputs.go_version }}
 
