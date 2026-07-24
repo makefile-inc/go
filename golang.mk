@@ -163,7 +163,9 @@ go/check/no-tidy: common/git/check/has-diff ## Run go mod tidy for all go module
 tmp-go-tests: ## Create tmp dir $(CURDIR)/tmp-go-tests for output tests results. Needs for pretty print tests results
 	@mkdir -p "$(GO_TESTS_TMP_DIR)"
 
-go/test: check/installed/go install/jq tmp-go-tests ## Run go test for all go modules and pretty print tests results.
+go/test/deps: check/installed/go install/jq tmp-go-tests ## Do checks and install deps for go/test
+
+go/test: go/test/deps ## Run go test for all go modules and pretty print tests results.
 	@##~ GO_TEST_RACE=true - run tests with -race flag. By default: run without race
 	@##~ GO_TEST_FORCE_RESTART=true - force rerun tests without using cache. By default: run with cache
 	@##~ GO_TEST_TAGS=TAGS - comma-separated tags to pass in tests. Optional
@@ -430,4 +432,4 @@ clean/go: clean/build ## Remove gofumpt and golangci-lint binaries and tmp test 
 	@rm -fv "$(GOFUMPT_BIN_FULL)"
 	@rm -rfv "$(GO_TESTS_TMP_DIR)"
 
-.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself
+.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test/deps go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself

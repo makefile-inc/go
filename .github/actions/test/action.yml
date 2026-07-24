@@ -19,7 +19,7 @@ inputs:
       - '_pull_request_ref_' - will checkout on `github.event.pull_request.head.sha` if handle `PullRequestEvent` 
         with `submodules: "recursive"` option.
         If event is not `PullRequestEvent` or `github.event.pull_request.head.sha` is empty, will exit with error
-      - '' - empty string disable, pass for example run tests on tags.
+      - '' - empty string disable, pass, for example, to run on tags.
         In this case you need checkout manually before run action
         with `submodules: "recursive"` option!
         It is default, because we suppose that you are using action with submodule.
@@ -42,9 +42,9 @@ inputs:
       - without_tests - run race tests without no race tests
     required: false
     default: 'no'
-  parallel_tests:
+  tests_parallelism:
     description: |
-      Run tests in parallel (by default).
+      Use `go test` default parallelism mechanics (by default).
       Pass 'false' to run tests with flag `-p 1`
     required: false
     default: 'true'
@@ -63,6 +63,19 @@ inputs:
       Comma-separated tags for run tests.
     required: false
     default: ''
+  parallel:
+    description: |
+      Run tasks in parallel with bash.
+      Uses utils functions from
+        https://gist.github.com/name212/713d715b94a627c2ef41c0425c4ae05b
+      for task runnings.
+      Values:
+      - 'tests' - run race tests and non-race tests in parallel
+      - 'lint' - run gitignore check and lint go-code in parallel
+      - 'all' - tests and lint (it is default)
+      - '' - empty string run all sequentially
+    required: false
+    default: 'all'
 runs:
   using: 'composite'
   steps:
@@ -73,6 +86,8 @@ runs:
       ref_from_pull: ${{ (github.event.type == 'PullRequestEvent' && github.event.pull_request) && github.event.pull_request.head.sha || '' }}
     shell: bash
     run: |
+      # Resolve checkout ref
+
       ref_to_output="$ref_from_user"
       if [ -n "$ref_to_output" ]; then
         if [[ "$ref_to_output" == "_pull_request_ref_" ]]; then
@@ -85,54 +100,132 @@ runs:
       fi
       echo "Checkout ref is '$ref_to_output'"
       echo "ref=$ref_to_output" >> "$GITHUB_OUTPUT"
+
   - name: Checkout
     if: ${{ steps.checkout_resolve.outputs.ref != '' }}
-    uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+    uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
     with:
       fetch-depth: 0
       submodules: "recursive"
       ref: ${{ steps.checkout_resolve.outputs.ref }}
+
   - name: Setup Go
     if: ${{ inputs.go_version != '' }}
-    uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
+    uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
     with:
       go-version: ${{ inputs.go_version }}
-  - name: Check .gitignore
-    if: ${{ inputs.check_gitignore == 'true' }}
-    shell: bash
-    run: make go/check/gitignore
+
   - name: Check go mod tidy not produce diff
     shell: bash
-    run: make go/check/no-tidy
-  - name: Write envs file
+    run: |
+      # Check go mod tidy not produce diff
+
+      make go/check/no-tidy
+
+  - name: Write test envs to file
+    id: test_envs
     if: ${{ inputs.tests_envs != '' }}
     shell: bash
     run: |
-      echo '${{ inputs.tests_envs }}' > .tests_dot_env
-  - name: Run tests without race
-    if: ${{ inputs.run_race_tests != 'without_tests' }}
+      # Write tests envs to file
+
+      envs_file="$(realpath .)"
+      envs_file="${envs_file}/.tests_dot_env_$RANDOM"
+
+      echo '${{ inputs.tests_envs }}' > "$envs_file"
+      echo "path=${envs_file}" >> "$GITHUB_OUTPUT"
+      echo "CLEANUP_PATH_TEST_ENVS=$envs_file" >> "$GITHUB_ENV"
+
+  - name: Run tests
     shell: bash
     env:
-      GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
+      GO_TEST_PARALLEL: ${{ inputs.tests_parallelism == 'true' && '' || '1' }}
       GO_TEST_TAGS: ${{ inputs.tests_tags }}
+      RUN_IN_PARALLEL: ${{ (inputs.parallel == 'all' || inputs.parallel == 'tests') && 'true' || '' }}
+      ENVS_FILE: ${{ steps.test_envs.outputs.path }}
+      RUN_NO_RACE: ${{ inputs.run_race_tests != 'without_tests' && 'true' || '' }}
+      RUN_WITH_RACE: ${{ inputs.run_race_tests != 'no' && 'true' || '' }}
+      TMPDIR: ${{ runner.temp }}
     run: |
-      if [ -f ".tests_dot_env" ]; then
-        set -a && source .tests_dot_env && set +a
+      # Run tests
+
+      source ${{ github.action_path }}/parallel.inc.sh
+
+      function do_tests() {
+        make go/test
+        return $?
+      }
+
+      function do_with_race() {
+        make go/test/race
+        return $?
+      }
+
+      tasks=()
+
+      if [[ "${RUN_NO_RACE:-}" == "true" ]]; then
+        tasks+=("do_tests")
       fi
-      make go/test
-  - name: Run tests with race
-    if: ${{ inputs.run_race_tests != 'no' }}
+
+      if [[ "${RUN_WITH_RACE:-}" == "true" ]]; then
+        echo "Race tests enabled"
+        tasks+=("do_with_race")
+      fi
+
+      if [ "${#tasks[@]}" -eq 0 ]; then
+        echo "Got empty tasks for run"
+        exit 1
+      fi
+
+      declare -A _tasks_to_msg
+      _tasks_to_msg["do_tests"]="Run tests"
+      _tasks_to_msg["do_with_race"]="Run tests with race"
+
+      if [ -n "$ENVS_FILE" ]; then
+        if [ -f "$ENVS_FILE" ]; then
+          set -a && source "$ENVS_FILE" && set +a
+        fi
+      fi
+
+      # install deps not in parallel for prevent File busy error
+      make go/test/deps
+
+      _run_tasks_and_exit "${tasks[@]}"
+
+  - name: Lint
     shell: bash
     env:
-      GO_TEST_PARALLEL: ${{ inputs.parallel_tests == 'true' && '' || '1' }}
-      GO_TEST_TAGS: ${{ inputs.tests_tags }}
+      RUN_GIT_IGNORE: ${{ inputs.check_gitignore == 'true' && 'true' || '' }}
+      RUN_IN_PARALLEL: ${{ (inputs.parallel == 'all' || inputs.parallel == 'lint') && 'true' || '' }}
+      TMPDIR: ${{ runner.temp }}
     run: |
-      if [ -f ".tests_dot_env" ]; then
-        set -a && source .tests_dot_env && set +a
+      # Lint
+
+      source ${{ github.action_path }}/parallel.inc.sh
+
+      function do_lint() {
+        make go/lint
+        return $?
+      }
+
+      function do_gitignore() {
+        make go/check/gitignore
+        return $?
+      }
+
+      tasks=("do_lint")
+
+      if [[ "${RUN_GIT_IGNORE:-}" == "true" ]]; then
+        tasks+=("do_gitignore")
       fi
-      make go/test/race
+
+
+      declare -A _tasks_to_msg
+      _tasks_to_msg["do_gitignore"]="Check .gitignore"
+      _tasks_to_msg["do_lint"]="Lint go code"
+      
+      _run_tasks_and_exit "${tasks[@]}"
+
   - name: Cleanup
     if: always()
-    shell: bash
-    run: |
-      rm -f ".tests_dot_env"
+    uses: name212/action-cleanup@377b123439a8ed3ada3d9553857d2a0a7bc3fcf9 # v2
