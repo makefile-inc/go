@@ -832,7 +832,7 @@ jobs:
         env:
         with: |
           go_version: "" # do not setup second time
-          target_ref: "" # do not checkout second time
+          target_ref: ${{ steps.release_name.outputs.ref }}
           token: ${{ secrets.GITHUB_TOKEN }}
           project: "migration"
           build_target: "release/migration"
