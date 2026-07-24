@@ -481,7 +481,6 @@ runs:
           "$RELEASE_NAME"
           --target
           "$TARGET_REF"
-          --fail-on-no-commits
           --draft
         )
         if [ -n "$NOTES_FILE" ]; then
