@@ -33,6 +33,13 @@ inputs:
       Pass 'false' to disable.
     required: false
     default: 'true'
+  check_license:
+    description: |
+      Check check license header with make target.
+      By default, use `go/check/license` target.
+      Pass 'false' to disable.
+    required: false
+    default: 'go/check/license'
   run_race_tests:
     description: |
       Run tests with `-race` flag
@@ -198,6 +205,7 @@ runs:
       RUN_GIT_IGNORE: ${{ inputs.check_gitignore == 'true' && 'true' || '' }}
       RUN_IN_PARALLEL: ${{ (inputs.parallel == 'all' || inputs.parallel == 'lint') && 'true' || '' }}
       TMPDIR: ${{ runner.temp }}
+      CHECK_LICENSE_TARGET: ${{ inputs.check_license == 'false' && '' || inputs.check_license }}
     run: |
       # Lint
 
@@ -213,16 +221,26 @@ runs:
         return $?
       }
 
+      function do_license() {
+        make "$CHECK_LICENSE_TARGET"
+        return $?
+      }
+
       tasks=("do_lint")
 
       if [[ "${RUN_GIT_IGNORE:-}" == "true" ]]; then
         tasks+=("do_gitignore")
       fi
 
+      if [ -n "$CHECK_LICENSE_TARGET" ]; then
+        tasks+=("do_license")
+      fi
+
 
       declare -A _tasks_to_msg
       _tasks_to_msg["do_gitignore"]="Check .gitignore"
       _tasks_to_msg["do_lint"]="Lint go code"
+      _tasks_to_msg["do_license"]="Check license header in .go files"
       
       _run_tasks_and_exit "${tasks[@]}"
 

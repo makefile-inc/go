@@ -1,10 +1,13 @@
+# Copyright 2026
+# license that can be found in the LICENSE file.
+
 GOLANGCI_BIN          = golangci-lint
 GOFUMPT_BIN           = gofumpt
 
 GOLANGCI_BIN_FULL     = $(BINARIES_PATH)/$(GOLANGCI_BIN)
 GOFUMPT_BIN_FULL      = $(BINARIES_PATH)/$(GOFUMPT_BIN)
 
-GO_TESTS_TMP_DIR      = $(abspath $(CURDIR)/tmp-go-tests)
+GO_TESTS_TMP_DIR      = $(abspath $(CURDIR)/.tmp-go-tests)
 
 # FIND_GO_MODULES_CMD - command for finding go modules inside $(CURDIR)
 # DO NOT in $(call ...)
@@ -72,15 +75,46 @@ install/go/gofumpt: ## gofumpt https://github.com/mvdan/gofumpt
 install/go/golangci-lint: export INSTALL_BIN_NAME = $(GOLANGCI_BIN)
 install/go/golangci-lint: export INSTALL_BIN_VERSION_ARG = --version
 install/go/golangci-lint: export INSTALL_BIN_VERSION = $(GOLANGCI_VERSION)
-install/go/golangci-lint: check/installed/curl ## golangci-lint https://github.com/golangci/golangci-lint
-	@function get_lint() { \
+install/go/golangci-lint: check/installed/curl bin ## golangci-lint https://github.com/golangci/golangci-lint
+	@${INCLUDE_CHECK_BINARY} \
+	function get_lint() { \
 		local version="$$1"; \
-		local bin_name="$$4"; \
+		local arch="$$2"; \
+		local os="$$3"; \
+		local dest="$$5"; \
 		local bin_dir="$$6"; \
 		set -Eeuo pipefail; \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | BINDIR="$$bin_dir" BINARY="$$bin_name" bash -s -- "v$$version"; \
+		local tmp_dir="$${bin_dir}/.go-lint-tmp"; \
+		if ! rm -rf "$$tmp_dir"; then \
+			echo_err "Cannot remove temp dir '$$tmp_dir' for output golangci-lint"; \
+			return 1; \
+		fi; \
+		if ! mkdir -p "$$tmp_dir"; then \
+			echo_err "Cannot create temp dir '$$tmp_dir' for output golangci-lint"; \
+			return 1; \
+		fi; \
+		local url="https://github.com/golangci/golangci-lint/releases/download/v$${version}/golangci-lint-$${version}-$${os}-$${arch}.tar.gz"; \
+		local file_in_arch="golangci-lint-$${version}-$${os}-$${arch}/golangci-lint"; \
+		local full_in_tmp="$${tmp_dir}/$${file_in_arch}"; \
+		curl -sSfL "$$url" | tar -xz -C "$$tmp_dir" "$$file_in_arch"; \
+		if [ ! -f "$$full_in_tmp" ]; then \
+			echo_err "golangci-lint extracted file '$$full_in_tmp' not found or not file"; \
+			return 1; \
+		fi; \
+		if ! mv "$$full_in_tmp" "$$dest"; then \
+			echo_err "Cannot move golangci-lint extracted file from '$$full_in_tmp' to '$$dest'"; \
+			return 1; \
+		fi; \
+		if ! chmod 755 "$$dest"; then \
+			echo_err "Cannot chmod to 755 '$$dest' file"; \
+			return 1; \
+		fi; \
+		if ! rm -rf "$$tmp_dir"; then \
+			echo_err "Cannot remove temp dir '$$tmp_dir' for output golangci-lint after extract"; \
+			return 1; \
+		fi; \
+		return 0; \
 	}; \
-	${INCLUDE_CHECK_BINARY} \
 	if ! check_and_get_bin get_lint; then \
 		exit 1; \
 	fi
@@ -160,10 +194,10 @@ go/check/no-tidy: common/git/check/has-diff ## Run go mod tidy for all go module
 
 ##@ Go. Tests
 
-tmp-go-tests: ## Create tmp dir $(CURDIR)/tmp-go-tests for output tests results. Needs for pretty print tests results
+.tmp-go-tests: ## Create tmp dir $(CURDIR)/.tmp-go-tests for output tests results. Needs for pretty print tests results
 	@mkdir -p "$(GO_TESTS_TMP_DIR)"
 
-go/test/deps: check/installed/go install/jq tmp-go-tests ## Do checks and install deps for go/test
+go/test/deps: check/installed/go install/jq .tmp-go-tests ## Do checks and install deps for go/test
 
 go/test: go/test/deps ## Run go test for all go modules and pretty print tests results.
 	@##~ GO_TEST_RACE=true - run tests with -race flag. By default: run without race
@@ -432,4 +466,13 @@ clean/go: clean/build ## Remove gofumpt and golangci-lint binaries and tmp test 
 	@rm -fv "$(GOFUMPT_BIN_FULL)"
 	@rm -rfv "$(GO_TESTS_TMP_DIR)"
 
-.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test/deps go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself
+##@ Go. License
+
+go/check/license: export EXTENSION_TO_CHECK = go
+go/check/license: export COMMENT_PREFIX = //
+go/check/license: ## Check license header across all go files in repo with comment prefix // and default rules described in common/license/check
+	@##~ If you need you redeclare COMMENT_PREFIX to empty and use FULL_COMMENT_STR
+	@##~ and another params
+	@$(MAKE) common/license/check
+
+.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test/deps go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself go/check/license

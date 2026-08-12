@@ -32,7 +32,7 @@ Checkout to target version:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.4.0 && git pull
+git fetch -a && git checkout v0.5.0
 git submodule update --recursive --init 
 popd
 ```
@@ -65,7 +65,7 @@ include $(CURDIR)/makefile-go/include.mk.inc
 
 ```bash
 cd makefile-go
-git fetch -a && git checkout NEW_TAG && git pull
+git fetch -a && git checkout v0.5.0
 git submodule update --recursive
 popd
 ```
@@ -95,7 +95,7 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 - `GOFUMPT_BIN` - name of `gofumt` binary: `gofumpt`
 - `GOLANGCI_BIN_FULL` - full path of `golangci` binary: `$(BINARIES_PATH)/$(GOLANGCI_BIN)`
 - `GOFUMPT_BIN_FULL` - full path of `golangci` binary: `$(BINARIES_PATH)/$(GOFUMPT_BIN)`
-- `GO_TESTS_TMP_DIR` - full path of temporary directory for test targets: `$(CURDIR)/tmp-go-tests`.
+- `GO_TESTS_TMP_DIR` - full path of temporary directory for test targets: `$(CURDIR)/.tmp-go-tests`.
 
 ### Definitions
 
@@ -121,7 +121,15 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 
 - `check/installed/go` - check that `go` installed and check golang version from `GO_LANG_VERSION`
 - `go/check/gitignore/itself` - check that `.gitignore` in `makefile.inc/go` up to date with `makefile.inc/common`
-- `go/check/gitignore` - check that `.gitignore` up to date with `makefile.inc/go`. Can be used in your repo. 
+- `go/check/gitignore` - check that `.gitignore` up to date with `makefile.inc/go`. Can be used in your repo.
+- `go/check/license` - check that all `.go` files contains license header:
+  
+  ```go
+  // Copyright YEAR
+  // license that can be found in the LICENSE file.
+  ```
+
+  Using `common/license/check` target. If you need customize license check, see target `common/license/check` help. 
 
 ### Tidy
 
@@ -140,7 +148,7 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 
 ### Tests
 
-- `tmp-go-tests` - create tmp dir `$(CURDIR)/tmp-go-tests` for output tests results. Needs for pretty print tests results
+- `.tmp-go-tests` - create tmp dir `$(CURDIR)/.tmp-go-tests` for output tests results. Needs for pretty print tests results
 - `go/test` - run `go test` for all go modules and pretty print tests results.
   
   Params:
@@ -152,7 +160,7 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 
   As you known, often heavy to find which test was failed in output of `go test`.
 
-  Target output tests results in `json-format` for every go module to tmp file in  `$(CURDIR)/tmp-go-tests` directory 
+  Target output tests results in `json-format` for every go module to tmp file in  `$(CURDIR)/.tmp-go-tests` directory 
   
   with suffix `*.tst.res`, also output on screen default output. 
   
@@ -415,7 +423,7 @@ because `make` will cache `go/build/current` and you build only dev binary.
 
 ## Github actions
 
-### Test
+### Test and lint
 
 #### Description
 
@@ -426,6 +434,7 @@ By default, action will checkout repo on github.event.pull_request.head.sha
 if handle `PullRequestEvent` with `submodules: "recursive"` option.
 
 Do next checks:
+- `go/check/license` (if need call customize check you can redeclare target with parameter `check_license` or disable with pass `false` to `check_license`)
 - `go/check/gitignore`
 - `go/check/no-tidy`
 - `go/test`
@@ -442,7 +451,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/test@v0.4.0
+- uses: makefile-inc/go/.github/actions/test@v0.5.0
   with:
     # Go version for actions/setup-go like `1.26.x`.
     # If do not need to setup go pass empty string.
@@ -467,6 +476,12 @@ Action uses:
     # Pass 'false' to disable.
     # Optional
     check_gitignore: 'true'
+
+    # Check check license header with make target.
+    # By default, use `go/check/license` target.
+    # Pass 'false' to disable.
+    # Optional
+    check_license: 'go/check/license'
   
     # Run tests with `-race` flag
     #  Values:
@@ -515,7 +530,7 @@ jobs:
 
     steps:
     - name: Run tests
-      uses: makefile-inc/go/.github/actions/test@v0.4.0
+      uses: makefile-inc/go/.github/actions/test@v0.5.0
       with:
         checkout: "_pull_request_ref_"
         run_race_tests: "with_tests"
@@ -555,7 +570,7 @@ jobs:
 
 ### Release
 
- Create release for go-application.
+Create release for go-application.
 For create/update release you can use your own token with pass via
 `inputs.token`. For successful upload, token or job should set next permissions:
 
@@ -573,7 +588,7 @@ jobs:
       contents: write
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.4.0
+      uses: makefile-inc/go/.github/actions/release@v0.5.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -610,7 +625,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/release@v0.4.0
+- uses: makefile-inc/go/.github/actions/release@v0.5.0
   with:
     # Go version for actions/setup-go like `1.26.x`.
     # If do not need to setup go pass empty string.
@@ -633,7 +648,7 @@ Action uses:
     #       contents: write
     #     steps:
     #     - name: Release
-    #       uses: makefile-inc/go/.github/actions/release@v0.4.0
+    #       uses: makefile-inc/go/.github/actions/release@v0.5.0
     #       with:
     #         token: ${{ secrets.GITHUB_TOKEN }}
     token: 'gha-efirjifjrifrjfr'
@@ -729,7 +744,7 @@ jobs:
 
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.4.0
+      uses: makefile-inc/go/.github/actions/release@v0.5.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: 'main'
@@ -766,7 +781,7 @@ jobs:
         out_ref="${REF#"$tag_prefix"}
         echo "tag=${out_ref}" >> "$GITHUB_OUTPUT"
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.4.0
+      uses: makefile-inc/go/.github/actions/release@v0.5.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: ${{ steps.release_name.outputs.tag }}
