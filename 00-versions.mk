@@ -1,3 +1,6 @@
+# Copyright 2026
+# license that can be found in the LICENSE file.
+
 ifndef GO_LANG_VERSION
 	GO_LANG_VERSION = 1.26
 endif
