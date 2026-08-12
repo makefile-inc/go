@@ -121,7 +121,15 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 
 - `check/installed/go` - check that `go` installed and check golang version from `GO_LANG_VERSION`
 - `go/check/gitignore/itself` - check that `.gitignore` in `makefile.inc/go` up to date with `makefile.inc/common`
-- `go/check/gitignore` - check that `.gitignore` up to date with `makefile.inc/go`. Can be used in your repo. 
+- `go/check/gitignore` - check that `.gitignore` up to date with `makefile.inc/go`. Can be used in your repo.
+- `go/check/license` - check that all `.go` files contains license header:
+  
+  ```go
+  // Copyright YEAR
+  // license that can be found in the LICENSE file.
+  ```
+
+  Using `common/license/check` target. If you need customize license check, see target `common/license/check` help. 
 
 ### Tidy
 
@@ -426,7 +434,7 @@ By default, action will checkout repo on github.event.pull_request.head.sha
 if handle `PullRequestEvent` with `submodules: "recursive"` option.
 
 Do next checks:
-- `go/check/license`
+- `go/check/license` (if need call customize check you can redeclare target with parameter `check_license` or disable with pass `false` to `check_license`)
 - `go/check/gitignore`
 - `go/check/no-tidy`
 - `go/test`

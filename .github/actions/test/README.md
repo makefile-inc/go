@@ -9,7 +9,7 @@ By default, action will checkout repo on github.event.pull_request.head.sha
 if handle `PullRequestEvent` with `submodules: "recursive"` option.
 
 Do next checks:
-- `go/check/license`
+- `go/check/license` (if need call customize check you can redeclare target with parameter `check_license` or disable with pass `false` to `check_license`)
 - `go/check/gitignore`
 - `go/check/no-tidy`
 - `go/test`
