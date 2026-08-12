@@ -32,7 +32,7 @@ Checkout to target version:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.4.0 && git pull
+git fetch -a && git checkout v0.5.0
 git submodule update --recursive --init 
 popd
 ```
@@ -65,7 +65,7 @@ include $(CURDIR)/makefile-go/include.mk.inc
 
 ```bash
 cd makefile-go
-git fetch -a && git checkout NEW_TAG && git pull
+git fetch -a && git checkout v0.5.0
 git submodule update --recursive
 popd
 ```
@@ -415,7 +415,7 @@ because `make` will cache `go/build/current` and you build only dev binary.
 
 ## Github actions
 
-### Test
+### Test and lint
 
 #### Description
 
@@ -426,6 +426,7 @@ By default, action will checkout repo on github.event.pull_request.head.sha
 if handle `PullRequestEvent` with `submodules: "recursive"` option.
 
 Do next checks:
+- `go/check/license`
 - `go/check/gitignore`
 - `go/check/no-tidy`
 - `go/test`
@@ -442,7 +443,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/test@v0.4.0
+- uses: makefile-inc/go/.github/actions/test@v0.5.0
   with:
     # Go version for actions/setup-go like `1.26.x`.
     # If do not need to setup go pass empty string.
@@ -467,6 +468,12 @@ Action uses:
     # Pass 'false' to disable.
     # Optional
     check_gitignore: 'true'
+
+    # Check check license header with make target.
+    # By default, use `go/check/license` target.
+    # Pass 'false' to disable.
+    # Optional
+    check_license: 'go/check/license'
   
     # Run tests with `-race` flag
     #  Values:
@@ -515,7 +522,7 @@ jobs:
 
     steps:
     - name: Run tests
-      uses: makefile-inc/go/.github/actions/test@v0.4.0
+      uses: makefile-inc/go/.github/actions/test@v0.5.0
       with:
         checkout: "_pull_request_ref_"
         run_race_tests: "with_tests"
@@ -555,7 +562,7 @@ jobs:
 
 ### Release
 
- Create release for go-application.
+Create release for go-application.
 For create/update release you can use your own token with pass via
 `inputs.token`. For successful upload, token or job should set next permissions:
 
@@ -573,7 +580,7 @@ jobs:
       contents: write
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.4.0
+      uses: makefile-inc/go/.github/actions/release@v0.5.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -610,7 +617,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/release@v0.4.0
+- uses: makefile-inc/go/.github/actions/release@v0.5.0
   with:
     # Go version for actions/setup-go like `1.26.x`.
     # If do not need to setup go pass empty string.
@@ -633,7 +640,7 @@ Action uses:
     #       contents: write
     #     steps:
     #     - name: Release
-    #       uses: makefile-inc/go/.github/actions/release@v0.4.0
+    #       uses: makefile-inc/go/.github/actions/release@v0.5.0
     #       with:
     #         token: ${{ secrets.GITHUB_TOKEN }}
     token: 'gha-efirjifjrifrjfr'
@@ -729,7 +736,7 @@ jobs:
 
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.4.0
+      uses: makefile-inc/go/.github/actions/release@v0.5.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: 'main'
@@ -766,7 +773,7 @@ jobs:
         out_ref="${REF#"$tag_prefix"}
         echo "tag=${out_ref}" >> "$GITHUB_OUTPUT"
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.4.0
+      uses: makefile-inc/go/.github/actions/release@v0.5.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: ${{ steps.release_name.outputs.tag }}

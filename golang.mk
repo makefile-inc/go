@@ -432,4 +432,13 @@ clean/go: clean/build ## Remove gofumpt and golangci-lint binaries and tmp test 
 	@rm -fv "$(GOFUMPT_BIN_FULL)"
 	@rm -rfv "$(GO_TESTS_TMP_DIR)"
 
-.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test/deps go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself
+##@ Go. License
+
+go/check/license: export EXTENSION_TO_CHECK = go
+go/check/license: export COMMENT_PREFIX = //
+go/check/license: ## Check license header across all go files in repo with comment prefix // and default rules described in common/license/check
+	@##~ If you need you redeclare COMMENT_PREFIX to empty and use FULL_COMMENT_STR
+	@##~ and another params
+	@$(MAKE) common/license/check
+
+.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test/deps go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself go/check/license
