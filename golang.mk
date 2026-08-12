@@ -75,15 +75,46 @@ install/go/gofumpt: ## gofumpt https://github.com/mvdan/gofumpt
 install/go/golangci-lint: export INSTALL_BIN_NAME = $(GOLANGCI_BIN)
 install/go/golangci-lint: export INSTALL_BIN_VERSION_ARG = --version
 install/go/golangci-lint: export INSTALL_BIN_VERSION = $(GOLANGCI_VERSION)
-install/go/golangci-lint: check/installed/curl ## golangci-lint https://github.com/golangci/golangci-lint
-	@function get_lint() { \
+install/go/golangci-lint: check/installed/curl bin ## golangci-lint https://github.com/golangci/golangci-lint
+	@${INCLUDE_CHECK_BINARY} \
+	function get_lint() { \
 		local version="$$1"; \
-		local bin_name="$$4"; \
+		local arch="$$2"; \
+		local os="$$3"; \
+		local dest="$$5"; \
 		local bin_dir="$$6"; \
 		set -Eeuo pipefail; \
-		curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | BINDIR="$$bin_dir" BINARY="$$bin_name" bash -s -- "v$$version"; \
+		local tmp_dir="$${bin_dir}/.go-lint-tmp"; \
+		if ! rm -rf "$$tmp_dir"; then \
+			echo_err "Cannot remove temp dir '$$tmp_dir' for output golangci-lint"; \
+			return 1; \
+		fi; \
+		if ! mkdir -p "$$tmp_dir"; then \
+			echo_err "Cannot create temp dir '$$tmp_dir' for output golangci-lint"; \
+			return 1; \
+		fi; \
+		local url="https://github.com/golangci/golangci-lint/releases/download/v$${version}/golangci-lint-$${version}-$${os}-$${arch}.tar.gz"; \
+		local file_in_arch="golangci-lint-$${version}-$${os}-$${arch}/golangci-lint"; \
+		local full_in_tmp="$${tmp_dir}/$${file_in_arch}"; \
+		curl -sSfL "$$url" | tar -xz -C "$$tmp_dir" "$$file_in_arch"; \
+		if [ ! -f "$$full_in_tmp" ]; then \
+			echo_err "golangci-lint extracted file '$$full_in_tmp' not found or not file"; \
+			return 1; \
+		fi; \
+		if ! mv "$$full_in_tmp" "$$dest"; then \
+			echo_err "Cannot move golangci-lint extracted file from '$$full_in_tmp' to '$$dest'"; \
+			return 1; \
+		fi; \
+		if ! chmod 755 "$$dest"; then \
+			echo_err "Cannot chmod to 755 '$$dest' file"; \
+			return 1; \
+		fi; \
+		if ! rm -rf "$$tmp_dir"; then \
+			echo_err "Cannot remove temp dir '$$tmp_dir' for output golangci-lint after extract"; \
+			return 1; \
+		fi; \
+		return 0; \
 	}; \
-	${INCLUDE_CHECK_BINARY} \
 	if ! check_and_get_bin get_lint; then \
 		exit 1; \
 	fi
