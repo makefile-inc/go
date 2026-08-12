@@ -95,7 +95,7 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 - `GOFUMPT_BIN` - name of `gofumt` binary: `gofumpt`
 - `GOLANGCI_BIN_FULL` - full path of `golangci` binary: `$(BINARIES_PATH)/$(GOLANGCI_BIN)`
 - `GOFUMPT_BIN_FULL` - full path of `golangci` binary: `$(BINARIES_PATH)/$(GOFUMPT_BIN)`
-- `GO_TESTS_TMP_DIR` - full path of temporary directory for test targets: `$(CURDIR)/tmp-go-tests`.
+- `GO_TESTS_TMP_DIR` - full path of temporary directory for test targets: `$(CURDIR)/.tmp-go-tests`.
 
 ### Definitions
 
@@ -140,7 +140,7 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 
 ### Tests
 
-- `tmp-go-tests` - create tmp dir `$(CURDIR)/tmp-go-tests` for output tests results. Needs for pretty print tests results
+- `.tmp-go-tests` - create tmp dir `$(CURDIR)/.tmp-go-tests` for output tests results. Needs for pretty print tests results
 - `go/test` - run `go test` for all go modules and pretty print tests results.
   
   Params:
@@ -152,7 +152,7 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 
   As you known, often heavy to find which test was failed in output of `go test`.
 
-  Target output tests results in `json-format` for every go module to tmp file in  `$(CURDIR)/tmp-go-tests` directory 
+  Target output tests results in `json-format` for every go module to tmp file in  `$(CURDIR)/.tmp-go-tests` directory 
   
   with suffix `*.tst.res`, also output on screen default output. 
   

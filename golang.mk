@@ -4,7 +4,7 @@ GOFUMPT_BIN           = gofumpt
 GOLANGCI_BIN_FULL     = $(BINARIES_PATH)/$(GOLANGCI_BIN)
 GOFUMPT_BIN_FULL      = $(BINARIES_PATH)/$(GOFUMPT_BIN)
 
-GO_TESTS_TMP_DIR      = $(abspath $(CURDIR)/tmp-go-tests)
+GO_TESTS_TMP_DIR      = $(abspath $(CURDIR)/.tmp-go-tests)
 
 # FIND_GO_MODULES_CMD - command for finding go modules inside $(CURDIR)
 # DO NOT in $(call ...)
@@ -160,10 +160,10 @@ go/check/no-tidy: common/git/check/has-diff ## Run go mod tidy for all go module
 
 ##@ Go. Tests
 
-tmp-go-tests: ## Create tmp dir $(CURDIR)/tmp-go-tests for output tests results. Needs for pretty print tests results
+.tmp-go-tests: ## Create tmp dir $(CURDIR)/.tmp-go-tests for output tests results. Needs for pretty print tests results
 	@mkdir -p "$(GO_TESTS_TMP_DIR)"
 
-go/test/deps: check/installed/go install/jq tmp-go-tests ## Do checks and install deps for go/test
+go/test/deps: check/installed/go install/jq .tmp-go-tests ## Do checks and install deps for go/test
 
 go/test: go/test/deps ## Run go test for all go modules and pretty print tests results.
 	@##~ GO_TEST_RACE=true - run tests with -race flag. By default: run without race
