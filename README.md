@@ -32,7 +32,7 @@ Checkout to target version:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.6.0
+git fetch -a && git checkout v0.7.0
 git submodule update --recursive --init 
 popd
 ```
@@ -64,8 +64,9 @@ include $(CURDIR)/makefile-go/include.mk.inc
 ## Update as submodule
 
 ```bash
+pushd .
 cd makefile-go
-git fetch -a && git checkout v0.6.0
+git fetch -a && git checkout v0.7.0
 git submodule update --recursive
 popd
 ```
@@ -111,6 +112,30 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
   ```
 
 ## Targets
+
+### Help target customize
+
+By default, run `make` or `make help` output all libraries targets (includes `makefile-common`).
+
+For comfortable help output, we recommend add to your `Makefile` next lines after include `makefile-go`
+(replace `YOUR PROJECT NAME` to you name of project):
+
+```Makefile
+include $(CURDIR)/makefile-go/include.mk.inc
+
+HELP_LIBRARIES_FIRST := true
+export HELP_LIBRARIES_FIRST
+
+HELP_LIBRARIES_OUT := $(_INC_MK_GO_ROOT_DIR)
+export HELP_LIBRARIES_OUT
+
+##@ YOUR PROJECT NAME
+```
+
+This lines enable output help targets of `makefile-go` first, after it will output targets
+from your `Makefile` for comfortable reading help message.
+
+See more section [Customize output help in our project](https://github.com/makefile-inc/common#customize-output-help-in-our-project) for more information.
 
 ### Install third-party binaries
 
@@ -451,7 +476,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/test@v0.6.0
+- uses: makefile-inc/go/.github/actions/test@v0.7.0
   with:
     # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
@@ -530,7 +555,7 @@ jobs:
 
     steps:
     - name: Run tests
-      uses: makefile-inc/go/.github/actions/test@v0.6.0
+      uses: makefile-inc/go/.github/actions/test@v0.7.0
       with:
         checkout: "_pull_request_ref_"
         run_race_tests: "with_tests"
@@ -588,7 +613,7 @@ jobs:
       contents: write
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.6.0
+      uses: makefile-inc/go/.github/actions/release@v0.7.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -625,7 +650,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/release@v0.6.0
+- uses: makefile-inc/go/.github/actions/release@v0.7.0
   with:
     # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
@@ -648,7 +673,7 @@ Action uses:
     #       contents: write
     #     steps:
     #     - name: Release
-    #       uses: makefile-inc/go/.github/actions/release@v0.6.0
+    #       uses: makefile-inc/go/.github/actions/release@v0.7.0
     #       with:
     #         token: ${{ secrets.GITHUB_TOKEN }}
     token: 'gha-efirjifjrifrjfr'
@@ -744,7 +769,7 @@ jobs:
 
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.6.0
+      uses: makefile-inc/go/.github/actions/release@v0.7.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: 'main'
@@ -781,7 +806,7 @@ jobs:
         out_ref="${REF#"$tag_prefix"}
         echo "tag=${out_ref}" >> "$GITHUB_OUTPUT"
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.6.0
+      uses: makefile-inc/go/.github/actions/release@v0.7.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: ${{ steps.release_name.outputs.tag }}
