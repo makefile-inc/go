@@ -2,7 +2,7 @@
 # license that can be found in the LICENSE file.
 
 ifndef GO_LANG_VERSION
-	GO_LANG_VERSION = 1.26
+	GO_LANG_VERSION = 1.27
 endif
 
 ifndef GOLANGCI_VERSION

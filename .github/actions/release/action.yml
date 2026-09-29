@@ -44,10 +44,10 @@ description: |
 inputs:
   go_version:
     description: |
-      Go version for actions/setup-go like `1.26.x`.
+      Go version for actions/setup-go like `1.27.x`.
       If do not need to setup go pass empty string.
     required: false
-    default: '1.26.x'
+    default: '1.27.x'
 
   target_ref:
     description: |

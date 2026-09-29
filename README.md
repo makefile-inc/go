@@ -84,7 +84,7 @@ It is include all variables and pre-definitions from [makefile.inc/common](https
 
 ### Variables
 
-- `GO_LANG_VERSION` - minor version (like `1.26`) of go usage.
+- `GO_LANG_VERSION` - minor version (like `1.27`) of go usage.
   You can redeclare it before include or pass to `make` command as make parameter (env var)
   Also you can pass version with patch.
 - `GOLANGCI_VERSION` - version for [golangci-lint](https://github.com/golangci/golangci-lint).
@@ -453,10 +453,10 @@ Action uses:
 ```yaml
 - uses: makefile-inc/go/.github/actions/test@v0.5.0
   with:
-    # Go version for actions/setup-go like `1.26.x`.
+    # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
     # Optional
-    go_version: '1.26.x'
+    go_version: '1.27.x'
     
     # Checkout repo. 
     # You can pass next values:
@@ -627,10 +627,10 @@ Action uses:
 ```yaml
 - uses: makefile-inc/go/.github/actions/release@v0.5.0
   with:
-    # Go version for actions/setup-go like `1.26.x`.
+    # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
     # Optional
-    go_version: '1.26.x'
+    go_version: '1.27.x'
     
     # Checkout repo to ref: branch, commit or tag
     # Required

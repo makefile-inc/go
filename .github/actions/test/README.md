@@ -28,10 +28,10 @@ Action uses:
 ```yaml
 - uses: makefile-inc/go/.github/actions/test@v0.5.0
   with:
-    # Go version for actions/setup-go like `1.26.x`.
+    # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
     # Optional
-    go_version: '1.26.x'
+    go_version: '1.27.x'
     
     # Checkout repo. 
     # You can pass next values:
