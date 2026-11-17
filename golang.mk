@@ -43,7 +43,7 @@ _GO_ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 go/check/gitignore/itself: export GITIGNORES_WITH_REQUIRED_RULES = $(_GO_ROOT_DIR)/makefile-common/.gitignore
 go/check/gitignore/itself: common/git/check/gitignore ## Check that .gitignore in makefile.inc/go up to date with makefile.inc/common 
 
-go/upgrade/module: common/git/submodule/upgrade/latest ## Upgrade makefile-go submodule
+go/upgrade/module: ## Upgrade makefile-go submodule
 	@##~ CHECKOUT_TO=GIT_REF_OR_TAG - if passed checkout to passed ref, otherwise to latest tag
 	@submod_dir="$(_INC_MK_GO_ROOT_DIR)"; \
 	if [ -z "$$submod_dir" ]; then \
