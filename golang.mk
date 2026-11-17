@@ -48,6 +48,8 @@ go/upgrade/module: ## Upgrade makefile-go submodule
 	@submod_dir="$(_INC_MK_GO_ROOT_DIR)"; \
 	if [ -z "$$submod_dir" ]; then \
 		submod_dir="makefile-go"; \
+	else \
+		submod_dir="${submod_dir#$(CURDIR)}"; \
 	fi; \
 	checkout_to="$${CHECKOUT_TO:-}"; \
 	if [ -z "$$checkout_to" ]; then \
