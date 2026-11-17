@@ -47,7 +47,7 @@ go/upgrade/module: ## Upgrade makefile-go submodule
 	@##~ CHECKOUT_TO=GIT_REF_OR_TAG - if passed checkout to passed ref, otherwise to latest tag
 	@submod_dir="$(_INC_MK_GO_ROOT_DIR)"; \
 	if [ -z "$$submod_dir" ]; then \
-		submod_dir="$(CURDIR)/makefile-go"; \
+		submod_dir="makefile-go"; \
 	fi; \
 	checkout_to="$${CHECKOUT_TO:-}"; \
 	if [ -z "$$checkout_to" ]; then \
