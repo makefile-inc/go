@@ -43,13 +43,17 @@ _GO_ROOT_DIR:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 go/check/gitignore/itself: export GITIGNORES_WITH_REQUIRED_RULES = $(_GO_ROOT_DIR)/makefile-common/.gitignore
 go/check/gitignore/itself: common/git/check/gitignore ## Check that .gitignore in makefile.inc/go up to date with makefile.inc/common 
 
-go/upgrade/module: ## Upgrade makefile-go submodule
+go/upgrade/makefile/common: export SUBMODULE_DIR = makefile-common
+go/upgrade/makefile/common: common/git/submodule/upgrade/latest ## Upgrade makefile-common submodule
+
+go/upgrade/module: ## Upgrade makefile-go submodule in your repo
 	@##~ CHECKOUT_TO=GIT_REF_OR_TAG - if passed checkout to passed ref, otherwise to latest tag
 	@submod_dir="$(_INC_MK_GO_ROOT_DIR)"; \
 	if [ -z "$$submod_dir" ]; then \
 		submod_dir="makefile-go"; \
 	else \
-		submod_dir="${submod_dir#$(CURDIR)}"; \
+		cur_dir="$(CURDIR)/"; \
+		submod_dir="$${submod_dir#$$cur_dir}"; \
 	fi; \
 	checkout_to="$${CHECKOUT_TO:-}"; \
 	if [ -z "$$checkout_to" ]; then \
@@ -489,4 +493,4 @@ go/check/license: ## Check license header across all go files in repo with comme
 	@##~ and another params
 	@$(MAKE) common/license/check
 
-.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test/deps go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself go/check/license
+	.PHONY: check/installed/go install/go/gofumpt install/go/golangci-lint go/lint go/lint/fix go/tidy go/check/no-tidy go/test/deps go/test go/test/race go/test/force clean/go go/build/current go/build/linux go/build/mac/all go/build/mac go/build/all _go/build/target go/check/gitignore/itself go/check/license go/upgrade/makefile/common go/upgrade/module
