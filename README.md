@@ -32,7 +32,7 @@ Checkout to target version:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.10.0
+git fetch -a && git checkout v0.11.0
 git submodule update --recursive --init 
 popd
 ```
@@ -63,7 +63,19 @@ include $(CURDIR)/makefile-go/include.mk.inc
 
 ## Update as submodule
 ```bash
-make common/git/submodule/upgrade SUBMODULE_DIR="makefile-go" CHECKOUT_TO="v0.10.0"
+make common/git/submodule/upgrade SUBMODULE_DIR="makefile-go" CHECKOUT_TO="v0.11.0"
+```
+
+or to latest tag:
+
+```bash
+make common/git/submodule/upgrade/latest SUBMODULE_DIR="makefile-go"
+```
+
+or to latest tag with auto find submodule dir:
+
+```bash
+make go/upgrade/module
 ```
 
 or manually:
@@ -71,7 +83,7 @@ or manually:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.10.0
+git fetch -a && git checkout v0.11.0
 git submodule update --recursive
 popd
 ```
@@ -141,6 +153,13 @@ This lines enable output help targets of `makefile-go` first, after it will outp
 from your `Makefile` for comfortable reading help message.
 
 See more section [Customize output help in our project](https://github.com/makefile-inc/common#customize-output-help-in-our-project) for more information.
+
+### Upgrade
+
+- `go/upgrade/module` - find submodule dir (if not found use `$(CURDIR)/makefile-go`) and upgrade.
+  
+  Params:
+  - `CHECKOUT_TO`=*GIT_REF_OR_TAG* - if passed checkout to passed ref, otherwise to latest tag
 
 ### Install third-party binaries
 
@@ -481,7 +500,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/test@v0.10.0
+- uses: makefile-inc/go/.github/actions/test@v0.11.0
   with:
     # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
@@ -560,7 +579,7 @@ jobs:
 
     steps:
     - name: Run tests
-      uses: makefile-inc/go/.github/actions/test@v0.10.0
+      uses: makefile-inc/go/.github/actions/test@v0.11.0
       with:
         checkout: "_pull_request_ref_"
         run_race_tests: "with_tests"
@@ -618,7 +637,7 @@ jobs:
       contents: write
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.10.0
+      uses: makefile-inc/go/.github/actions/release@v0.11.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -655,7 +674,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/release@v0.10.0
+- uses: makefile-inc/go/.github/actions/release@v0.11.0
   with:
     # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
@@ -678,7 +697,7 @@ Action uses:
     #       contents: write
     #     steps:
     #     - name: Release
-    #       uses: makefile-inc/go/.github/actions/release@v0.10.0
+    #       uses: makefile-inc/go/.github/actions/release@v0.11.0
     #       with:
     #         token: ${{ secrets.GITHUB_TOKEN }}
     token: 'gha-efirjifjrifrjfr'
@@ -774,7 +793,7 @@ jobs:
 
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.10.0
+      uses: makefile-inc/go/.github/actions/release@v0.11.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: 'main'
@@ -811,7 +830,7 @@ jobs:
         out_ref="${REF#"$tag_prefix"}
         echo "tag=${out_ref}" >> "$GITHUB_OUTPUT"
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.10.0
+      uses: makefile-inc/go/.github/actions/release@v0.11.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: ${{ steps.release_name.outputs.tag }}
