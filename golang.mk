@@ -48,18 +48,8 @@ go/upgrade/makefile/common: common/git/submodule/upgrade/latest ## Upgrade makef
 
 go/upgrade/module: ## Upgrade makefile-go submodule in your repo
 	@##~ CHECKOUT_TO=GIT_REF_OR_TAG - if passed checkout to passed ref, otherwise to latest tag
-	@submod_dir="$(_INC_MK_GO_ROOT_DIR)"; \
-	if [ -z "$$submod_dir" ]; then \
-		submod_dir="makefile-go"; \
-	else \
-		cur_dir="$(CURDIR)/"; \
-		submod_dir="$${submod_dir#$$cur_dir}"; \
-	fi; \
-	checkout_to="$${CHECKOUT_TO:-}"; \
-	if [ -z "$$checkout_to" ]; then \
-		checkout_to=":last:"; \
-	fi; \
-	$(MAKE) common/git/submodule/upgrade SUBMODULE_DIR="$$submod_dir" CHECKOUT_TO="$$checkout_to"
+	@${INCLUDE_MAKEFILE_GIT_MODULE} \
+	update_submodule_to_latest "$(_INC_MK_GO_ROOT_DIR)" "makefile-go" "$${CHECKOUT_TO:-}"
 
 go/check/gitignore: ## Check that .gitignore up to date with makefile.inc/common and makefile.inc/go
 	@${INCLUDE_ECHO} \
