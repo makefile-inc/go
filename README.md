@@ -32,7 +32,7 @@ Checkout to target version:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.12.0
+git fetch -a && git checkout v0.13.0
 git submodule update --recursive --init 
 popd
 ```
@@ -63,7 +63,7 @@ include $(CURDIR)/makefile-go/include.mk.inc
 
 ## Update as submodule
 ```bash
-make common/git/submodule/upgrade SUBMODULE_DIR="makefile-go" CHECKOUT_TO="v0.12.0"
+make common/git/submodule/upgrade SUBMODULE_DIR="makefile-go" CHECKOUT_TO="v0.13.0"
 ```
 
 or to latest tag:
@@ -83,7 +83,7 @@ or manually:
 ```bash
 pushd .
 cd makefile-go
-git fetch -a && git checkout v0.12.0
+git fetch -a && git checkout v0.13.0
 git submodule update --recursive
 popd
 ```
@@ -500,7 +500,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/test@v0.12.0
+- uses: makefile-inc/go/.github/actions/test@v0.13.0
   with:
     # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
@@ -579,7 +579,7 @@ jobs:
 
     steps:
     - name: Run tests
-      uses: makefile-inc/go/.github/actions/test@v0.12.0
+      uses: makefile-inc/go/.github/actions/test@v0.13.0
       with:
         checkout: "_pull_request_ref_"
         run_race_tests: "with_tests"
@@ -637,7 +637,7 @@ jobs:
       contents: write
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.12.0
+      uses: makefile-inc/go/.github/actions/release@v0.13.0
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 ```
@@ -674,7 +674,7 @@ Action uses:
 #### Usage
 
 ```yaml
-- uses: makefile-inc/go/.github/actions/release@v0.12.0
+- uses: makefile-inc/go/.github/actions/release@v0.13.0
   with:
     # Go version for actions/setup-go like `1.27.x`.
     # If do not need to setup go pass empty string.
@@ -697,7 +697,7 @@ Action uses:
     #       contents: write
     #     steps:
     #     - name: Release
-    #       uses: makefile-inc/go/.github/actions/release@v0.12.0
+    #       uses: makefile-inc/go/.github/actions/release@v0.13.0
     #       with:
     #         token: ${{ secrets.GITHUB_TOKEN }}
     token: 'gha-efirjifjrifrjfr'
@@ -793,7 +793,7 @@ jobs:
 
     steps:
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.12.0
+      uses: makefile-inc/go/.github/actions/release@v0.13.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: 'main'
@@ -830,7 +830,7 @@ jobs:
         out_ref="${REF#"$tag_prefix"}
         echo "tag=${out_ref}" >> "$GITHUB_OUTPUT"
     - name: Release
-      uses: makefile-inc/go/.github/actions/release@v0.12.0
+      uses: makefile-inc/go/.github/actions/release@v0.13.0
       with: |
         token: ${{ secrets.GITHUB_TOKEN }}
         target_ref: ${{ steps.release_name.outputs.tag }}
